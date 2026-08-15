@@ -7,6 +7,7 @@ const API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-api';
 const BUILD_VERSION='visitor-map-top-first-v4-20260815';
 const DELETE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-delete';
 const ANALYTICS_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-analytics';
+const ELEMENTS_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-elements';
 const analyticsSession=()=>{try{let id=sessionStorage.getItem('pastlife:session');if(!id){id=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;sessionStorage.setItem('pastlife:session',id)}return id}catch{return `${Date.now()}-${Math.random().toString(36).slice(2)}`}};
 const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event_name,session_id:analyticsSession(),page_slug:data.page_slug||null,relationship_id:data.relationship_id||null,metadata:data.metadata||{}})}).catch(()=>{})};
 
@@ -24,6 +25,16 @@ const relationIcon=(code?:string,label?:string)=>{
 };
 
 const scoreOf=(r:any,key:string)=>Number(r?.scores?.[key]||0);
+
+const elementIcon=(element?:string|null)=>{
+ const map:Record<string,string>={wood:'🌿',fire:'🔥',earth:'⛰️',metal:'⚪',water:'💧'};
+ return map[String(element||'').toLowerCase()]||'○';
+};
+const elementLabel=(element?:string|null)=>{
+ const map:Record<string,string>={wood:'목(木)',fire:'화(火)',earth:'토(土)',metal:'금(金)',water:'수(水)'};
+ return map[String(element||'').toLowerCase()]||'오행';
+};
+
 const maxBy=(items:any[],get:(x:any)=>number)=>items.length?[...items].sort((a,b)=>get(b)-get(a))[0]:null;
 
 function buildHighlights(items:any[]){
@@ -120,7 +131,7 @@ function HighlightGrid({items,count}:{items:any[];count:number}){
 }
 
 
-function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[];clickable?:boolean;mineId?:string|null}){
+function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:string;items:any[];clickable?:boolean;mineId?:string|null;ownerElement?:string|null}){
  const safeItems=Array.isArray(items)?items:[];
  const ranked=[...safeItems].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
  const rankById=new Map(ranked.map((x:any,i:number)=>[x.id,i+1]));
@@ -157,7 +168,7 @@ function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[]
    const isMine=n.id===mineId;
    const inner=<>
      {n.rank&&n.rank<=3&&<span className={`map-rank-badge map-rank-${n.rank}`}>{n.rank===1?'👑':n.rank===2?'🥈':'🥉'}</span>}
-     <i>{relationIcon(n.type_code,n.relationship_type)}</i>
+     <i title={elementLabel(n.day_element)}>{elementIcon(n.day_element)}</i>
      <b>{isMine?'나':n.nickname}</b>
      <small>{n.score}</small>
      {isMine&&<em>NEW</em>}
@@ -171,18 +182,22 @@ function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[]
    <div className="radial-title">
      <p className="eyebrow">전생 인연지도</p>
      <h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2>
-     <p>100점에 가까울수록 중심 인물 가까이에 표시됩니다.</p>
+     <p>거리는 인연 점수, 아이콘은 각 사람의 일간 오행을 나타냅니다.</p>
    </div>
    <div className="radial-map">
      <div className="orbit score-orbit orbit-85"><span>85점</span></div>
      <div className="orbit score-orbit orbit-70"><span>70점</span></div>
      <div className="orbit score-orbit orbit-55"><span>55점</span></div>
-     <div className="center-person"><span>☯</span><b>{owner}</b><small>100점</small></div>
+     <div className="center-person"><span title={elementLabel(ownerElement)}>{elementIcon(ownerElement)}</span><b>{owner}</b><small>{elementLabel(ownerElement)}</small></div>
      {nodes.map(renderNode)}
    </div>
    {safeItems.length>maxVisible&&<p className="radial-more">+ {safeItems.length-maxVisible}명의 인연이 더 있습니다.</p>}
-   <div className="map-legend">
-     <span>중심 100점</span><span>1차 궤도 85점</span><span>2차 궤도 70점</span>
+   <div className="map-legend score-legend element-legend">
+     <span>🌿 목(木)</span>
+     <span>🔥 화(火)</span>
+     <span>⛰️ 토(土)</span>
+     <span>⚪ 금(金)</span>
+     <span>💧 수(水)</span>
    </div>
  </div>
 }
@@ -234,13 +249,25 @@ function rankInfo(items:any[],mineId?:string|null){
 
 function Page(){const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);
  const mineId=new URLSearchParams(location.search).get('mine');
- const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}`);const d=await r.json();setData(r.ok?d:null)}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);React.useEffect(()=>{if(slug)track('page_view',{page_slug:slug})},[slug]);
+ const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{
+  const [pageRes,elRes]=await Promise.all([
+    fetch(`${API}/pages/${encodeURIComponent(slug||'')}`),
+    fetch(`${ELEMENTS_API}?slug=${encodeURIComponent(slug||'')}`).catch(()=>null)
+  ]);
+  const d=await pageRes.json();
+  if(!pageRes.ok){setData(null);return}
+  let ed:any=null;
+  if(elRes&&elRes.ok){try{ed=await elRes.json()}catch{}}
+  const byRel=new Map((ed?.relationships||[]).map((x:any)=>[x.relationship_id,x.day_element]));
+  const relationships=(d.relationships||[]).map((x:any)=>({...x,day_element:byRel.get(x.id)||null}));
+  setData({...d,owner_element:ed?.owner_element||null,relationships});
+}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);React.useEffect(()=>{if(slug)track('page_view',{page_slug:slug})},[slug]);
  if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
  const mine=data.relationships?.find((x:any)=>x.id===mineId);
  const mineRank=rankInfo(data.relationships||[],mineId);
  const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');track('join_submit',{page_slug:slug,relationship_id:d.relationship_id});location.href=`/ad/${d.relationship_id}?page=${encodeURIComponent(slug||'')}`};
  const share=async()=>{track('share_click',{page_slug:slug,metadata:{source:'map'}});const url=`${location.origin}/n/${slug}`;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
- const publicMap=data.relationships?.length>0?<RadialMap owner={data.owner_nickname} items={data.relationships} clickable={ownerMode} mineId={mineId}/>:<div className="empty-public-map card"><span>☯</span><b>아직 첫 인연을 기다리고 있어요</b><p>첫 번째로 참여해서 {data.owner_nickname}의 인연지도를 시작해보세요.</p></div>;
+ const publicMap=data.relationships?.length>0?<RadialMap owner={data.owner_nickname} ownerElement={data.owner_element} items={data.relationships} clickable={ownerMode} mineId={mineId}/>:<div className="empty-public-map card"><span>☯</span><b>아직 첫 인연을 기다리고 있어요</b><p>첫 번째로 참여해서 {data.owner_nickname}의 인연지도를 시작해보세요.</p></div>;
  return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">지금까지 참여한 인연 <strong>{data.count}명</strong></div><AdSlot placement="map"/>
  {ownerMode?<>{publicMap}<RelationshipRanking items={data.relationships} mineId={mineId} ownerMode={true}/>{data.relationships.length>0&&<><div className="relation-list card"><div className="section-title"><span>🗂️</span><div><small>발견된 인연</small><h3>전체 인연 보기</h3></div></div>{data.relationships.map((x:any)=><Link className="relation-row" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><div><b>{x.nickname}</b><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></Link>)}</div><HighlightGrid items={data.relationships} count={data.count}/></>}<button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 잠긴 전생 기록이 열립니다.</p></>:
  mine?<><section className="join-reveal">
