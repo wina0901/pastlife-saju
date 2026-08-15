@@ -645,3 +645,241 @@ footer{
     font-size:11px!important;
   }
 }
+
+/* =========================================================
+   인연 연결선 + 전류 흐름 효과
+   ========================================================= */
+.radial-map{
+  position:relative!important;
+  overflow:visible!important;
+}
+
+.connection-layer{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:2;
+  overflow:visible;
+}
+
+.electric-connection{
+  filter:url(#electricGlow);
+}
+
+.connection-base{
+  stroke:#d7c3ab;
+  stroke-width:.42;
+  opacity:.52;
+  vector-effect:non-scaling-stroke;
+}
+
+.connection-flow{
+  stroke:#b77b45;
+  stroke-width:.75;
+  opacity:.95;
+  stroke-linecap:round;
+  stroke-dasharray:2.6 8.5;
+  vector-effect:non-scaling-stroke;
+  animation:electricFlow 2.15s linear infinite;
+}
+
+@keyframes electricFlow{
+  from{stroke-dashoffset:0}
+  to{stroke-dashoffset:-22}
+}
+
+/* 선이 노드보다 뒤에 있도록 */
+.radial-map .orbit{
+  z-index:1!important;
+}
+
+.center-person,
+.radial-node{
+  position:absolute!important;
+  z-index:5!important;
+}
+
+/* 중심 노드에 은은한 에너지 링 */
+.center-person::before{
+  content:"";
+  position:absolute;
+  inset:-8px;
+  border-radius:50%;
+  border:1px solid rgba(183,123,69,.22);
+  box-shadow:
+    0 0 0 6px rgba(183,123,69,.05),
+    0 0 24px rgba(183,123,69,.16);
+  animation:centerPulse 2.2s ease-in-out infinite;
+  pointer-events:none;
+}
+
+@keyframes centerPulse{
+  0%,100%{transform:scale(.96);opacity:.55}
+  50%{transform:scale(1.08);opacity:1}
+}
+
+/* 각 사람 노드에도 살짝 반응 */
+.radial-node{
+  transition:transform .25s ease, box-shadow .25s ease!important;
+}
+
+.radial-node:hover{
+  transform:translate(-50%,-50%) scale(1.06)!important;
+  box-shadow:0 10px 24px rgba(116,83,50,.16)!important;
+}
+
+/* 모바일에서는 전류를 조금 부드럽게 */
+@media(max-width:520px){
+  .connection-base{stroke-width:.34}
+  .connection-flow{
+    stroke-width:.58;
+    stroke-dasharray:2 7;
+  }
+}
+
+/* =========================================================
+   인연 랭킹 - 깔끔한 리스트형
+   ========================================================= */
+.ranking-list-card{
+  padding:22px 20px!important;
+}
+
+.clean-ranking-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:14px;
+}
+
+.clean-rank-row{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  min-height:66px;
+  padding:12px 14px;
+  border:1px solid #eadfce;
+  border-radius:14px;
+  background:#fffdf9;
+  text-decoration:none;
+  color:inherit;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+
+.clean-rank-row:hover{
+  transform:translateY(-1px);
+  border-color:#d5bea4;
+  box-shadow:0 7px 18px rgba(89,66,45,.07);
+}
+
+.clean-rank-number{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#f2e9de;
+  color:#7f6a56;
+  font-size:14px;
+  font-weight:900;
+}
+
+.clean-rank-number.top-1{
+  background:#f8ecd0;
+  color:#9a7227;
+  border:1px solid #dfc17b;
+}
+
+.clean-rank-number.top-2{
+  background:#f1efea;
+  color:#7f776d;
+  border:1px solid #d8d1c7;
+}
+
+.clean-rank-number.top-3{
+  background:#f4e5db;
+  color:#946d54;
+  border:1px solid #d7b6a0;
+}
+
+.clean-rank-main{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.clean-rank-name{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.clean-rank-name b{
+  font-size:14px!important;
+  color:#3b3026!important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.clean-rank-name em{
+  font-style:normal;
+  padding:2px 6px;
+  border-radius:999px;
+  background:#b58b62;
+  color:#fff;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+
+.clean-rank-main>span{
+  color:#927f6d!important;
+  font-size:11px!important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.clean-rank-row>strong{
+  font-size:15px!important;
+  color:#8c6544!important;
+  white-space:nowrap;
+}
+
+.clean-rank-row:nth-child(1){
+  background:linear-gradient(90deg,#fff9ed,#fffdf9);
+  border-color:#dfc384;
+}
+
+.clean-rank-row:nth-child(2){
+  background:linear-gradient(90deg,#f7f5f1,#fffdf9);
+}
+
+.clean-rank-row:nth-child(3){
+  background:linear-gradient(90deg,#fbf1ea,#fffdf9);
+}
+
+.clean-rank-row.mine-row{
+  border-color:#b99570!important;
+  box-shadow:0 0 0 2px rgba(185,149,112,.10);
+}
+
+@media(max-width:520px){
+  .ranking-list-card{padding:18px 14px!important}
+  .clean-rank-row{
+    grid-template-columns:36px minmax(0,1fr) auto;
+    gap:9px;
+    padding:11px 10px;
+  }
+  .clean-rank-number{
+    width:30px;
+    height:30px;
+    font-size:12px;
+  }
+  .clean-rank-main>span{font-size:10px!important}
+  .clean-rank-row>strong{font-size:13px!important}
+}

@@ -185,6 +185,27 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
      <div className="orbit score-orbit orbit-85"/>
      <div className="orbit score-orbit orbit-70"/>
      <div className="orbit score-orbit orbit-55"/>
+     <svg className="connection-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+       <defs>
+         <filter id="electricGlow" x="-50%" y="-50%" width="200%" height="200%">
+           <feGaussianBlur stdDeviation="0.7" result="blur"/>
+           <feMerge>
+             <feMergeNode in="blur"/>
+             <feMergeNode in="SourceGraphic"/>
+           </feMerge>
+         </filter>
+       </defs>
+       {nodes.map((n:any,index:number)=>(
+         <g key={`line-${n.id}`} className="electric-connection">
+           <line className="connection-base" x1="50" y1="50" x2={n.x} y2={n.y}/>
+           <line
+             className="connection-flow"
+             x1="50" y1="50" x2={n.x} y2={n.y}
+             style={{animationDelay:`-${(index%6)*0.28}s`}}
+           />
+         </g>
+       ))}
+     </svg>
      <div className="center-person"><b>{owner}</b><small>나</small></div>
      {nodes.map(renderNode)}
    </div>
@@ -195,39 +216,31 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
 function RelationshipRanking({items,mineId,ownerMode=false}:{items:any[];mineId?:string|null;ownerMode?:boolean}){
  const ranked=[...(items||[])].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
  if(!ranked.length)return null;
- const myIndex=mineId?ranked.findIndex((x:any)=>x.id===mineId):-1;
- const myRank=myIndex>=0?myIndex+1:null;
- const top3=ranked.slice(0,3);
- const medal=(index:number)=>index===0?'👑':index===1?'🥈':'🥉';
- return <div className="ranking-card card">
+ const medal=(rank:number)=>rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':String(rank);
+ return <div className="ranking-card card ranking-list-card">
    <div className="section-title"><span>🏆</span><div><small>전생 인연 랭킹</small><h3>누가 가장 가까운 인연일까?</h3></div></div>
-   <p className="ranking-copy">인연의 깊이 점수가 높은 순서예요. 관계 이름은 간단히 공개되고 상세 풀이는 본인만 볼 수 있습니다.</p>
-   {myRank===1&&<div className="new-champion"><span>👑</span><div><small>NEW #1</small><b>내가 새로운 1위 인연이에요!</b><p>{scoreOf(ranked[0],'인연의깊이')}점으로 가장 가까운 자리에 올라왔어요.</p></div></div>}
-   {myRank&&myRank>1&&<div className="my-rank-summary"><span>✨</span><div><small>내 현재 순위</small><b>{myRank}위 · {scoreOf(ranked[myIndex],'인연의깊이')}점</b></div></div>}
-   <div className="podium-grid">
-     {top3.map((x:any,index:number)=>{
+   <p className="ranking-copy">인연의 깊이가 높은 순서예요. 상세 관계는 본인만 확인할 수 있습니다.</p>
+   <div className="clean-ranking-list">
+     {ranked.map((x:any,index:number)=>{
+       const rank=index+1;
        const isMine=x.id===mineId;
-       return <div className={`podium-card podium-${index+1} ${isMine?'mine-podium':''}`} key={x.id}>
-         <span className="podium-medal">{medal(index)}</span>
-         <small>{index+1}위</small>
-         <b>{isMine?'나':x.nickname}</b>
-         <em>{relationIcon(x.type_code,x.relationship_type)} {x.relationship_type}</em>
-         <strong>{scoreOf(x,'인연의깊이')}<i>점</i></strong>
-       </div>
+       const row=<>
+         <span className={`clean-rank-number top-${Math.min(rank,4)}`}>{medal(rank)}</span>
+         <div className="clean-rank-main">
+           <div className="clean-rank-name"><b>{isMine?'나':x.nickname}</b>{isMine&&<em>MY</em>}</div>
+           <span>{x.relationship_type}</span>
+         </div>
+         <strong>{scoreOf(x,'인연의깊이')}점</strong>
+       </>;
+       if(ownerMode){
+         return <Link key={x.id} className={`clean-rank-row ${isMine?'mine-row':''}`} to={`/result/${x.id}`}>{row}</Link>;
+       }
+       return <div key={x.id} className={`clean-rank-row ${isMine?'mine-row':''}`}>{row}</div>;
      })}
    </div>
-   {ranked.length>3&&<div className="ranking-list">
-     {ranked.slice(3).map((x:any,index:number)=>{
-       const rank=index+4;const isMine=x.id===mineId;
-       const body=<><span className="rank-badge">{rank}</span><div className="rank-person"><b>{isMine?'나':x.nickname}</b><span>{relationIcon(x.type_code,x.relationship_type)} {x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}<i>점</i></strong></>;
-       if(ownerMode)return <Link key={x.id} className={`ranking-row ${isMine?'mine-rank':''}`} to={`/result/${x.id}`}>{body}</Link>;
-       return <div key={x.id} className={`ranking-row visitor-ranking-row ${isMine?'mine-rank':''}`}>{body}</div>;
-     })}
-   </div>}
    {!ownerMode&&<p className="ranking-private-note">🔒 다른 사람의 상세 관계는 공개되지 않아요.</p>}
  </div>
 }
-
 
 function rankInfo(items:any[],mineId?:string|null){
  const ranked=[...(items||[])].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
