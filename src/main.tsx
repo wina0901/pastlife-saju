@@ -167,38 +167,28 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
  const renderNode=(n:any)=>{
    const isMine=n.id===mineId;
    const inner=<>
-     {n.rank&&n.rank<=3&&<span className={`map-rank-badge map-rank-${n.rank}`}>{n.rank===1?'👑':n.rank===2?'🥈':'🥉'}</span>}
-     <i title={elementLabel(n.day_element)}>{elementIcon(n.day_element)}</i>
+     <span className="map-role">{n.participant_role||n.relationship_type||'인연'}</span>
      <b>{isMine?'나':n.nickname}</b>
-     <small>{n.score}</small>
-     {isMine&&<em>NEW</em>}
    </>;
    return clickable
-     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.relationship_type||''} · ${n.score}점`}>{inner}</Link>
-     : <div key={n.id} className={`radial-node visitor-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${n.score}점`:`${n.nickname} · ${n.score}점`}>{inner}</div>;
+     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.participant_role||n.relationship_type||'인연'}`}>{inner}</Link>
+     : <div key={n.id} className={`radial-node visitor-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${n.participant_role||n.relationship_type||'인연'}`:`${n.nickname} · ${n.participant_role||n.relationship_type||'인연'}`}>{inner}</div>;
  };
 
  return <div className="radial-card card">
    <div className="radial-title">
      <p className="eyebrow">전생 인연지도</p>
      <h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2>
-     <p>거리는 인연 점수, 아이콘은 각 사람의 일간 오행을 나타냅니다.</p>
+     <p>가까울수록 인연이 깊고, 각 사람의 원에는 나와의 전생 역할이 표시됩니다.</p>
    </div>
    <div className="radial-map">
-     <div className="orbit score-orbit orbit-85"><span>85점</span></div>
-     <div className="orbit score-orbit orbit-70"><span>70점</span></div>
-     <div className="orbit score-orbit orbit-55"><span>55점</span></div>
-     <div className="center-person"><span title={elementLabel(ownerElement)}>{elementIcon(ownerElement)}</span><b>{owner}</b><small>{elementLabel(ownerElement)}</small></div>
+     <div className="orbit score-orbit orbit-85"/>
+     <div className="orbit score-orbit orbit-70"/>
+     <div className="orbit score-orbit orbit-55"/>
+     <div className="center-person"><b>{owner}</b><small>나</small></div>
      {nodes.map(renderNode)}
    </div>
    {safeItems.length>maxVisible&&<p className="radial-more">+ {safeItems.length-maxVisible}명의 인연이 더 있습니다.</p>}
-   <div className="map-legend score-legend element-legend">
-     <span>🌿 목(木)</span>
-     <span>🔥 화(火)</span>
-     <span>⛰️ 토(土)</span>
-     <span>⚪ 금(金)</span>
-     <span>💧 수(水)</span>
-   </div>
  </div>
 }
 

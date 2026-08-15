@@ -514,3 +514,65 @@ footer{
 .radial-node i{font-size:21px!important}
 .center-person span{font-size:30px!important;line-height:1!important}
 .center-person small{font-size:8px!important;color:#9a7a5d!important}
+
+.map-rank-badge,
+.map-rank-1,
+.map-rank-2,
+.map-rank-3,
+.mine-node > em,
+.radial-node > i{
+  display:none!important;
+}
+
+.radial-node{
+  min-width:70px!important;
+  min-height:70px!important;
+  padding:8px 7px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+}
+
+.map-role{
+  display:block!important;
+  max-width:62px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  color:#8c6544!important;
+  line-height:1.2!important;
+}
+
+.radial-node b{
+  max-width:62px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:10px!important;
+  font-weight:700!important;
+  color:#3b3026!important;
+}
+
+.mine-node{
+  border-color:#b99570!important;
+  box-shadow:0 0 0 2px rgba(185,149,112,.12),0 7px 18px rgba(94,68,45,.10)!important;
+}
+
+.center-person > span{
+  display:none!important;
+}
+
+.center-person{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:3px!important;
+}
+
+.center-person b{font-size:13px!important}
+.center-person small{font-size:9px!important;color:#9a7a5d!important}
