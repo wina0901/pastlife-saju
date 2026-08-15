@@ -155,3 +155,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
   border-radius:0!important;
   padding:0!important;
 }
+
+/* 점수 기반 인연지도 기준선 */
+.score-orbit{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;border:1px solid #493650!important;border-radius:50%!important}
+.orbit-85{width:44%!important;height:44%!important}
+.orbit-70{width:68%!important;height:68%!important}
+.orbit-55{width:92%!important;height:92%!important}
+.score-orbit>span{position:absolute;top:-9px;left:50%;transform:translateX(-50%);padding:2px 6px;border-radius:999px;background:#1d1525;color:#8f789d;font-size:8px;white-space:nowrap}
+.center-person small{display:block;margin-top:2px;font-size:8px;color:#b895ca}

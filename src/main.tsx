@@ -126,26 +126,33 @@ function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[]
  const rankById=new Map(ranked.map((x:any,i:number)=>[x.id,i+1]));
  const maxVisible=16;
  const visible=safeItems.slice(0,maxVisible);
- const ringFor=(item:any)=>{
-   const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
-   return score>=88?0:score>=75?1:2;
+
+ // 점수를 중심으로부터의 거리로 직접 변환합니다.
+ // 100점 = 중앙 인물 원 바로 바깥
+ // 85점  = 첫 번째 기준 궤도
+ // 70점  = 두 번째 기준 궤도
+ // 55점  = 세 번째 기준 궤도
+ // 중간 점수는 선형 보간되어 궤도 사이에 배치됩니다.
+ const radiusForScore=(raw:number)=>{
+   const score=Math.max(40,Math.min(100,Number(raw)||60));
+   const centerEdge=11;  // 100점 위치
+   const orbit85=22;     // 85점 라인
+   const orbit70=34;     // 70점 라인
+   const orbit55=46;     // 55점 라인
+   if(score>=85) return centerEdge+(100-score)/(100-85)*(orbit85-centerEdge);
+   if(score>=70) return orbit85+(85-score)/(85-70)*(orbit70-orbit85);
+   if(score>=55) return orbit70+(70-score)/(70-55)*(orbit55-orbit70);
+   return Math.min(48,orbit55+(55-score)/(55-40)*2);
  };
- const radii=[30,39,47];
- const nodes=visible.map((item:any)=>{
+
+ const nodes=visible.map((item:any,index:number)=>{
    const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
-   const ring=ringFor(item);
-   const sameRing=visible.filter((x:any)=>ringFor(x)===ring);
-   const ringIndex=Math.max(0,sameRing.findIndex((x:any)=>x.id===item.id));
-   const angle=(ringIndex/Math.max(1,sameRing.length))*Math.PI*2-(Math.PI/2)+(ring*.22);
-   return {
-     ...item,
-     x:50+Math.cos(angle)*radii[ring],
-     y:50+Math.sin(angle)*radii[ring],
-     score,
-     ring,
-     rank:rankById.get(item.id)||null
-   };
+   const radius=radiusForScore(score);
+   // 같은/비슷한 점수끼리 겹치지 않도록 각도만 분산합니다.
+   const angle=(index/Math.max(1,visible.length))*Math.PI*2-(Math.PI/2)+(score%7)*0.035;
+   return {...item,x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius,score,rank:rankById.get(item.id)||null};
  });
+
  const renderNode=(n:any)=>{
    const isMine=n.id===mineId;
    const inner=<>
@@ -156,26 +163,26 @@ function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[]
      {isMine&&<em>NEW</em>}
    </>;
    return clickable
-     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node ring-${n.ring} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.relationship_type||''}`}>{inner}</Link>
-     : <div key={n.id} className={`radial-node ring-${n.ring} visitor-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?'나의 인연':`${n.nickname}의 인연`}>{inner}</div>;
+     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.relationship_type||''} · ${n.score}점`}>{inner}</Link>
+     : <div key={n.id} className={`radial-node visitor-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${n.score}점`:`${n.nickname} · ${n.score}점`}>{inner}</div>;
  };
+
  return <div className="radial-card card">
    <div className="radial-title">
      <p className="eyebrow">전생 인연지도</p>
      <h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2>
-     <p>{mineId?'빛나는 노드가 방금 참여한 나입니다.':'인연의 깊이가 높을수록 중심에 가깝게 표시됩니다.'}</p>
+     <p>100점에 가까울수록 중심 인물 가까이에 표시됩니다.</p>
    </div>
    <div className="radial-map">
-     <div className="orbit orbit-1"/><div className="orbit orbit-2"/><div className="orbit orbit-3"/>
-     <div className="center-person"><span>☯</span><b>{owner}</b></div>
+     <div className="orbit score-orbit orbit-85"><span>85점</span></div>
+     <div className="orbit score-orbit orbit-70"><span>70점</span></div>
+     <div className="orbit score-orbit orbit-55"><span>55점</span></div>
+     <div className="center-person"><span>☯</span><b>{owner}</b><small>100점</small></div>
      {nodes.map(renderNode)}
    </div>
    {safeItems.length>maxVisible&&<p className="radial-more">+ {safeItems.length-maxVisible}명의 인연이 더 있습니다.</p>}
    <div className="map-legend">
-     <span><i className="dot d1"/> 깊은 인연</span>
-     <span><i className="dot d2"/> 가까운 인연</span>
-     <span><i className="dot d3"/> 스쳐온 인연</span>
-     {mineId&&<span><i className="dot dmine"/> 나</span>}
+     <span>중심 100점</span><span>1차 궤도 85점</span><span>2차 궤도 70점</span>
    </div>
  </div>
 }
