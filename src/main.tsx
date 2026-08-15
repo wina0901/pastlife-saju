@@ -6,6 +6,9 @@ import './styles.css';
 const API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-api';
 const BUILD_VERSION='visitor-map-top-first-v4-20260815';
 const DELETE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-delete';
+const ANALYTICS_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-analytics';
+const analyticsSession=()=>{try{let id=sessionStorage.getItem('pastlife:session');if(!id){id=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;sessionStorage.setItem('pastlife:session',id)}return id}catch{return `${Date.now()}-${Math.random().toString(36).slice(2)}`}};
+const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event_name,session_id:analyticsSession(),page_slug:data.page_slug||null,relationship_id:data.relationship_id||null,metadata:data.metadata||{}})}).catch(()=>{})};
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
@@ -30,7 +33,7 @@ function buildHighlights(items:any[]){
  const sticky=maxBy(items,r=>scoreOf(r,'질긴인연'));
  return [
   {need:3,icon:'💫',title:'가장 깊은 인연',item:deepest,score:deepest?scoreOf(deepest,'인연의깊이'):0},
-  {need:7,icon:'💎',title:'나의 귀인',item:benefactor,score:benefactor?scoreOf(benefactor,'서로에게주는영향'):0},
+  {need:5,icon:'💎',title:'나의 귀인',item:benefactor,score:benefactor?scoreOf(benefactor,'서로에게주는영향'):0},
   {need:10,icon:'🔥',title:'숙명의 라이벌',item:rival,score:rival?scoreOf(rival,'충돌'):0},
   {need:15,icon:'🪢',title:'가장 질긴 인연',item:sticky,score:sticky?scoreOf(sticky,'질긴인연'):0},
  ];
@@ -52,7 +55,7 @@ function AdSlot({placement='content'}:{placement?:string}){
 function AdGate(){
  const {id}=useParams();const nav=useNavigate();const [stage,setStage]=React.useState<'analyzing'|'ad'>('analyzing');const [left,setLeft]=React.useState(5);
  const pageSlug=new URLSearchParams(location.search).get('page')||'';
- React.useEffect(()=>{const t=setTimeout(()=>setStage('ad'),1300);return()=>clearTimeout(t)},[]);
+ React.useEffect(()=>{const t=setTimeout(()=>{setStage('ad');track('ad_reached',{page_slug:pageSlug,relationship_id:id})},1300);return()=>clearTimeout(t)},[]);
  React.useEffect(()=>{if(stage!=='ad')return;const t=setInterval(()=>setLeft(v=>{if(v<=1){clearInterval(t);return 0}return v-1}),1000);return()=>clearInterval(t)},[stage]);
  const go=()=>{if(left!==0)return;if(pageSlug)nav(`/n/${encodeURIComponent(pageSlug)}?mine=${encodeURIComponent(id||'')}`,{replace:true});else nav(`/result/${id}`,{replace:true})};
  return <Shell><section className="ad-gate-page">
@@ -84,71 +87,119 @@ function PersonForm({buttonText,onSubmit}:{buttonText:string,onSubmit:(v:PersonI
 
 function Home(){return <Shell><section className="hero"><div className="orb">☯</div><p className="eyebrow">전생 인연지도</p><h1>우리, 전생에는<br/>무슨 사이였을까?</h1><p>내 사주로 페이지를 만들고 친구들을 초대해보세요.<br/>친구들이 참여할수록 전생 인연지도가 완성됩니다.</p><Link className="primary link" to="/create">내 전생 인연지도 만들기</Link></section></Shell>}
 
-function Create(){const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok) return alert(d.error||'생성에 실패했습니다.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);nav(`/n/${d.slug}`)};return <Shell><section><p className="eyebrow">STEP 1</p><h1>먼저 당신을 알려주세요</h1><p className="muted">한 번 만들면 친구에게 공유할 수 있는 나만의 주소가 생깁니다.</p><PersonForm buttonText="내 사주로 지도 만들기" onSubmit={submit}/><AdSlot placement="create"/></section></Shell>}
+function Create(){const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok) return alert(d.error||'생성에 실패했습니다.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);track('page_create',{page_slug:d.slug});nav(`/n/${d.slug}`)};return <Shell><section><p className="eyebrow">STEP 1</p><h1>먼저 당신을 알려주세요</h1><p className="muted">한 번 만들면 친구에게 공유할 수 있는 나만의 주소가 생깁니다.</p><PersonForm buttonText="내 사주로 지도 만들기" onSubmit={submit}/><AdSlot placement="create"/></section></Shell>}
 
-function HighlightGrid({items,count}:{items:any[];count:number}){const hs=buildHighlights(items);return <div className="highlight-wrap"><div className="highlight-head"><p className="eyebrow">인연 분석</p><h2>친구들이 채워주는<br/>나의 전생 기록</h2></div><div className="highlight-grid">{hs.map(h=>{const unlocked=count>=h.need&&h.item;const left=Math.max(0,h.need-count);return <div className={`highlight-card ${unlocked?'unlocked':'locked-highlight'}`} key={h.title}>{unlocked?<><span className="highlight-icon">{h.icon}</span><small>{h.title}</small><b>{h.item.nickname}</b><em>{h.item.relationship_type}</em><strong>{h.score}</strong></>:<><span className="highlight-icon">🔒</span><small>{h.title}</small><b>{left}명 더 필요</b><em>{count} / {h.need}</em><div className="mini-progress"><span style={{width:`${Math.min(100,(count/h.need)*100)}%`}}/></div></>}</div>})}</div></div>}
-
-function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[];clickable?:boolean;mineId?:string|null}){
- const maxVisible=16;
- const visible=items.slice(0,maxVisible);
- const nodes=visible.map((item:any)=>{
-   const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
-   const ring=score>=88?0:score>=75?1:2;
-   const radii=[30,39,47];
-   const sameRing=visible.filter((x:any)=>{const s=scoreOf(x,'인연의깊이')||60;return (s>=88?0:s>=75?1:2)===ring});
-   const ringIndex=sameRing.findIndex((x:any)=>x.id===item.id);
-   const angle=(ringIndex/Math.max(1,sameRing.length))*Math.PI*2-(Math.PI/2)+(ring*.22);
-   const x=50+Math.cos(angle)*radii[ring];
-   const y=50+Math.sin(angle)*radii[ring];
-   return {...item,x,y,score,ring};
- });
- const node=(n:any)=>{const inner=<><i>{relationIcon(n.type_code,n.relationship_type)}</i><b>{n.id===mineId?'나':n.nickname}</b><small>{n.score}</small>{n.id===mineId&&<em>NEW</em>}</>;return clickable?<Link to={`/result/${n.id}`} key={n.id} className={`radial-node ring-${n.ring} ${n.id===mineId?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.relationship_type}`}>{inner}</Link>:<div key={n.id} className={`radial-node ring-${n.ring} visitor-node ${n.id===mineId?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={n.id===mineId?'나의 인연':`${n.nickname}의 인연`}>{inner}</div>};
- return <div className="radial-card card">
-   <div className="radial-title"><p className="eyebrow">전생 인연지도</p><h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2><p>{mineId?'빛나는 노드가 방금 참여한 나입니다.':'인연의 깊이가 높을수록 중심에 가깝게 표시됩니다.'}</p></div>
-   <div className="radial-map">
-     <div className="orbit orbit-1"/><div className="orbit orbit-2"/><div className="orbit orbit-3"/>
-     <div className="center-person"><span>☯</span><b>{owner}</b></div>
-     {nodes.map(node)}
+function HighlightGrid({items,count}:{items:any[];count:number}){
+ const hs=buildHighlights(items);
+ const next=hs.find(h=>count<h.need);
+ return <section className="unlock-section">
+   <div className="unlock-header">
+     <div><p className="eyebrow">인연 해금</p><h2>친구가 늘어날수록<br/>새 기록이 열려요</h2></div>
+     <div className="unlock-total"><strong>{count}</strong><span>명 참여</span></div>
    </div>
-   {items.length>maxVisible&&<p className="radial-more">+ {items.length-maxVisible}명의 인연이 더 있습니다.</p>}
-   <div className="map-legend"><span><i className="dot d1"/> 깊은 인연</span><span><i className="dot d2"/> 가까운 인연</span><span><i className="dot d3"/> 스쳐온 인연</span>{mineId&&<span><i className="dot dmine"/> 나</span>}</div>
- </div>
+   {next&&<div className="next-unlock-banner">
+     <span>🔓</span>
+     <div><small>다음 해금까지</small><b>{next.need-count}명 남았어요</b><p>{next.title} 공개 예정</p></div>
+     <strong>{count}/{next.need}</strong>
+   </div>}
+   {!next&&<div className="all-unlocked-banner"><span>✨</span><div><b>모든 전생 기록이 열렸어요</b><p>이제 네 가지 특별 인연을 모두 확인할 수 있습니다.</p></div></div>}
+   <div className="unlock-grid">
+     {hs.map(h=>{
+       const unlocked=count>=h.need&&h.item;
+       const left=Math.max(0,h.need-count);
+       const pct=Math.min(100,(count/h.need)*100);
+       return <article className={`unlock-card ${unlocked?'is-unlocked':'is-locked'}`} key={h.title}>
+         <div className="unlock-card-top"><span className="unlock-icon">{unlocked?h.icon:'🔒'}</span><span className="unlock-need">{h.need}명</span></div>
+         <small>{h.title}</small>
+         {unlocked?<><b>{h.item.nickname}</b><em>{h.item.relationship_type}</em><div className="unlock-score"><span>점수</span><strong>{h.score}</strong></div><div className="unlocked-stamp">UNLOCKED</div></>:
+         <><b>{left}명 더 필요</b><em>친구를 더 초대하면 공개돼요</em><div className="unlock-progress"><span style={{width:`${pct}%`}}/></div><div className="unlock-progress-label"><span>{count}</span><span>{h.need}</span></div></>}
+       </article>
+     })}
+   </div>
+ </section>
 }
 
 function RelationshipRanking({items,mineId,ownerMode=false}:{items:any[];mineId?:string|null;ownerMode?:boolean}){
  const ranked=[...(items||[])].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
  if(!ranked.length)return null;
+ const myIndex=mineId?ranked.findIndex((x:any)=>x.id===mineId):-1;
+ const myRank=myIndex>=0?myIndex+1:null;
+ const top3=ranked.slice(0,3);
+ const medal=(index:number)=>index===0?'👑':index===1?'🥈':'🥉';
  return <div className="ranking-card card">
-   <div className="section-title"><span>🏆</span><div><small>인연 랭킹</small><h3>가까운 인연 순위</h3></div></div>
-   <p className="ranking-copy">인연의 깊이 점수가 높은 순서입니다.</p>
-   <div className="ranking-list">
-     {ranked.map((x:any,index:number)=>{
+   <div className="section-title"><span>🏆</span><div><small>전생 인연 랭킹</small><h3>누가 가장 가까운 인연일까?</h3></div></div>
+   <p className="ranking-copy">인연의 깊이 점수가 높은 순서예요. 관계 이름은 간단히 공개되고 상세 풀이는 본인만 볼 수 있습니다.</p>
+   {myRank===1&&<div className="new-champion"><span>👑</span><div><small>NEW #1</small><b>내가 새로운 1위 인연이에요!</b><p>{scoreOf(ranked[0],'인연의깊이')}점으로 가장 가까운 자리에 올라왔어요.</p></div></div>}
+   {myRank&&myRank>1&&<div className="my-rank-summary"><span>✨</span><div><small>내 현재 순위</small><b>{myRank}위 · {scoreOf(ranked[myIndex],'인연의깊이')}점</b></div></div>}
+   <div className="podium-grid">
+     {top3.map((x:any,index:number)=>{
        const isMine=x.id===mineId;
-       const body=<>
-         <span className={`rank-badge rank-${Math.min(index+1,4)}`}>{index+1}</span>
-         <div className="rank-person"><b>{isMine?'나':x.nickname}</b><span>{relationIcon(x.type_code,x.relationship_type)} {x.relationship_type}</span></div>
-         <strong>{scoreOf(x,'인연의깊이')}</strong>
-       </>;
+       return <div className={`podium-card podium-${index+1} ${isMine?'mine-podium':''}`} key={x.id}>
+         <span className="podium-medal">{medal(index)}</span>
+         <small>{index+1}위</small>
+         <b>{isMine?'나':x.nickname}</b>
+         <em>{relationIcon(x.type_code,x.relationship_type)} {x.relationship_type}</em>
+         <strong>{scoreOf(x,'인연의깊이')}<i>점</i></strong>
+       </div>
+     })}
+   </div>
+   {ranked.length>3&&<div className="ranking-list">
+     {ranked.slice(3).map((x:any,index:number)=>{
+       const rank=index+4;const isMine=x.id===mineId;
+       const body=<><span className="rank-badge">{rank}</span><div className="rank-person"><b>{isMine?'나':x.nickname}</b><span>{relationIcon(x.type_code,x.relationship_type)} {x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}<i>점</i></strong></>;
        if(ownerMode)return <Link key={x.id} className={`ranking-row ${isMine?'mine-rank':''}`} to={`/result/${x.id}`}>{body}</Link>;
        return <div key={x.id} className={`ranking-row visitor-ranking-row ${isMine?'mine-rank':''}`}>{body}</div>;
      })}
-   </div>
-   {!ownerMode&&<p className="ranking-private-note">다른 사람의 상세 관계는 공개되지 않습니다.</p>}
+   </div>}
+   {!ownerMode&&<p className="ranking-private-note">🔒 다른 사람의 상세 관계는 공개되지 않아요.</p>}
  </div>
+}
+
+
+function rankInfo(items:any[],mineId?:string|null){
+ const ranked=[...(items||[])].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
+ const index=ranked.findIndex((x:any)=>x.id===mineId);
+ if(index<0)return null;
+ const item=ranked[index];
+ return {rank:index+1,total:ranked.length,item,score:scoreOf(item,'인연의깊이')};
 }
 
 function Page(){const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);
  const mineId=new URLSearchParams(location.search).get('mine');
- const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}`);const d=await r.json();setData(r.ok?d:null)}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);
+ const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}`);const d=await r.json();setData(r.ok?d:null)}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);React.useEffect(()=>{if(slug)track('page_view',{page_slug:slug})},[slug]);
  if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
  const mine=data.relationships?.find((x:any)=>x.id===mineId);
- const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');location.href=`/ad/${d.relationship_id}?page=${encodeURIComponent(slug||'')}`};
- const share=async()=>{const url=`${location.origin}/n/${slug}`;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
+ const mineRank=rankInfo(data.relationships||[],mineId);
+ const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');track('join_submit',{page_slug:slug,relationship_id:d.relationship_id});location.href=`/ad/${d.relationship_id}?page=${encodeURIComponent(slug||'')}`};
+ const share=async()=>{track('share_click',{page_slug:slug,metadata:{source:'map'}});const url=`${location.origin}/n/${slug}`;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
  const publicMap=data.relationships?.length>0?<RadialMap owner={data.owner_nickname} items={data.relationships} clickable={ownerMode} mineId={mineId}/>:<div className="empty-public-map card"><span>☯</span><b>아직 첫 인연을 기다리고 있어요</b><p>첫 번째로 참여해서 {data.owner_nickname}의 인연지도를 시작해보세요.</p></div>;
  return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">지금까지 참여한 인연 <strong>{data.count}명</strong></div><AdSlot placement="map"/>
  {ownerMode?<>{publicMap}<RelationshipRanking items={data.relationships} mineId={mineId} ownerMode={true}/>{data.relationships.length>0&&<><div className="relation-list card"><div className="section-title"><span>🗂️</span><div><small>발견된 인연</small><h3>전체 인연 보기</h3></div></div>{data.relationships.map((x:any)=><Link className="relation-row" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><div><b>{x.nickname}</b><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></Link>)}</div><HighlightGrid items={data.relationships} count={data.count}/></>}<button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 잠긴 전생 기록이 열립니다.</p></>:
- mine?<><div className="joined-banner card"><span>✨</span><div><small>인연지도 참여 완료</small><h2>{mine.nickname}님이 새 인연으로 추가됐어요</h2><p>지도에서 빛나는 노드가 내 자리입니다.</p></div></div>{publicMap}<RelationshipRanking items={data.relationships} mineId={mineId}/><Link className="primary link detail-cta" to={`/result/${mine.id}`}>{data.owner_nickname}와 관계 자세히 보기</Link><p className="detail-hint">전생 역할 · 관계 점수 · 사주 근거 · 전생 이야기를 확인할 수 있어요.</p><button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button></>:
- <><section className="visitor-map-top">{publicMap}<RelationshipRanking items={data.relationships}/><div className="visitor-map-caption"><b>현재 {data.count}명이 {data.owner_nickname}의 인연지도에 참여했어요</b><p>나도 참여하면 이 지도에 새로운 인연으로 추가됩니다.</p></div></section><div className="join-intro below-map"><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">아래에 내 정보를 입력하면 광고 시청 후 지도에 내 자리가 추가됩니다.</p></div><PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/><span className="build-version">{BUILD_VERSION}</span></>}
+ mine?<><section className="join-reveal">
+   <div className="join-reveal-hero card">
+     <div className="join-check">✓</div>
+     <p className="eyebrow">인연지도 참여 완료</p>
+     <h2>{mine.nickname}님이<br/>{data.owner_nickname}의 인연에 추가됐어요</h2>
+     <p>지도에서 빛나는 노드가 내 자리입니다.</p>
+     {mineRank&&<div className="my-rank-summary">
+       <div><small>현재 순위</small><strong>{mineRank.rank}<span>위</span></strong></div>
+       <div><small>인연의 깊이</small><strong>{mineRank.score}<span>점</span></strong></div>
+       <div><small>전체 참여</small><strong>{mineRank.total}<span>명</span></strong></div>
+     </div>}
+     {mineRank?.rank===1&&<div className="new-first-banner">👑 새로운 1위 인연이 되었어요!</div>}
+   </div>
+   {publicMap}
+   <RelationshipRanking items={data.relationships} mineId={mineId}/>
+   <HighlightGrid items={data.relationships} count={data.count}/>
+   <div className="mine-relation-preview card">
+     <span className="mine-preview-icon">{relationIcon(mine.type_code,mine.relationship_type)}</span>
+     <div><small>나와 {data.owner_nickname}의 전생 관계</small><h3>{mine.relationship_type}</h3><p>전생 역할과 관계 점수, 사주 근거를 더 자세히 확인해보세요.</p></div>
+   </div>
+   <Link className="primary link detail-cta" to={`/result/${mine.id}`}>{data.owner_nickname}와 관계 자세히 보기</Link>
+   <p className="detail-hint">이 상세 결과는 본인 관계만 열 수 있어요.</p>
+   <button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button>
+ </section></>:
+ <><section className="visitor-map-top">{publicMap}<RelationshipRanking items={data.relationships}/><HighlightGrid items={data.relationships} count={data.count}/><div className="visitor-map-caption"><b>현재 {data.count}명이 {data.owner_nickname}의 인연지도에 참여했어요</b><p>나도 참여하면 이 지도에 새로운 인연으로 추가됩니다.</p></div></section><div className="join-intro below-map"><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">아래에 내 정보를 입력하면 광고 시청 후 지도에 내 자리가 추가됩니다.</p></div><PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/><span className="build-version">{BUILD_VERSION}</span></>}
  </section></Shell>}
 function ScoreBars({scores}:{scores:Record<string,number>}){return <div className="scores card"><div className="section-title"><span>☯</span><div><small>현생에 남은 흔적</small><h3>두 사람의 인연 지표</h3></div></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div></div>})}</div>}
 
@@ -204,17 +255,16 @@ async function shareStoryCard(r:any){
  }catch(e){console.error(e);alert('이미지 생성 중 오류가 발생했습니다.');}
 }
 
-function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null);const [error,setError]=React.useState(false);const [making,setMaking]=React.useState(false);React.useEffect(()=>{fetch(`${API}/relationships/${encodeURIComponent(id||'')}`).then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j)}).catch(()=>setError(true))},[id]);if(error)return <Shell><div className="card">전생 기록을 찾을 수 없습니다.</div></Shell>;if(!d?.relationship)return <Shell><div className="card loading-card">두 사람의 전생 기록을 펼치는 중...</div></Shell>;
+function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null);const [error,setError]=React.useState(false);const [making,setMaking]=React.useState(false);React.useEffect(()=>{fetch(`${API}/relationships/${encodeURIComponent(id||'')}`).then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j);track('result_view',{page_slug:j?.relationship?.pageSlug,relationship_id:id})}).catch(()=>setError(true))},[id]);if(error)return <Shell><div className="card">전생 기록을 찾을 수 없습니다.</div></Shell>;if(!d?.relationship)return <Shell><div className="card loading-card">두 사람의 전생 기록을 펼치는 중...</div></Shell>;
  const r=d.relationship;const icon=relationIcon(r.typeCode,r.label);const basis=r.analysisBasis;const factors=Array.isArray(basis?.key_factors)?basis.key_factors:[];
- const share=async()=>{const url=location.href;const text=`${r.ownerNickname} × ${r.participantNickname}\n${icon} ${r.label}\n“${r.oneLiner}”`;if(navigator.share){try{await navigator.share({title:'사주로 보는 전생의 인연',text,url});return}catch{}}await navigator.clipboard.writeText(`${text}\n${url}`);alert('결과와 링크를 복사했습니다.');};
- const storyShare=async()=>{setMaking(true);try{await shareStoryCard(r)}finally{setMaking(false)}};
+ const share=async()=>{track('share_click',{page_slug:r.pageSlug,relationship_id:id,metadata:{source:'result'}});const url=location.href;const text=`${r.ownerNickname} × ${r.participantNickname}\n${icon} ${r.label}\n“${r.oneLiner}”`;if(navigator.share){try{await navigator.share({title:'사주로 보는 전생의 인연',text,url});return}catch{}}await navigator.clipboard.writeText(`${text}\n${url}`);alert('결과와 링크를 복사했습니다.');};
+ const storyShare=async()=>{track('story_share',{page_slug:r.pageSlug,relationship_id:id});setMaking(true);try{await shareStoryCard(r)}finally{setMaking(false)}};
  return <Shell><section className="result"><div className="result-hero"><p className="eyebrow">사주로 보는 전생의 인연</p><div className="result-icon">{icon}</div><p className="era">{r.era}</p><h1>{r.label}</h1><p className="pair">{r.ownerNickname} <span>×</span> {r.participantNickname}</p><p className="result-quote">“{r.oneLiner}”</p></div>
  <div className="card roles"><div><small>전생의 역할</small><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><small>전생의 역할</small><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div>
  <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
  <ScoreBars scores={r.scores||{}}/><AdSlot placement="result"/>
  {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}
- <div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 이미지</b><p>9:16 비율의 결과 카드를 만들어 공유할 수 있어요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div>
- <button className="primary share-btn" onClick={share}>링크로 결과 공유하기</button>{r.pageSlug&&<Link className="secondary link" to={`/n/${r.pageSlug}`}>전생 인연지도 돌아가기</Link>}<Link className="ghost-link" to="/create">나도 내 전생 인연지도 만들기 →</Link></section></Shell>}
+ <section className="viral-result-section"><div className="viral-result-head"><p className="eyebrow">SHARE YOUR FATE</p><h2>이 결과, 친구에게도<br/>보여주고 싶지 않나요?</h2><p>결과를 공유하거나 내 인연지도를 만들면 또 다른 친구들과 전생 관계를 비교할 수 있어요.</p></div><div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 결과 카드</b><p>관계 유형과 점수가 담긴 9:16 이미지를 만들어 공유하세요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div><button className="primary share-btn" onClick={share}>친구에게 이 결과 공유하기</button><div className="become-owner-card card"><span>🔮</span><div><small>이번에는 내가 중심이 되어볼 차례</small><h3>내 전생 인연지도 만들기</h3><p>내 링크를 만들고 친구들을 초대하면 누가 나와 가장 깊은 인연인지 랭킹으로 확인할 수 있어요.</p></div><Link className="primary link" to="/create">내 인연지도 만들기</Link></div>{r.pageSlug&&<Link className="secondary link return-map-btn" to={`/n/${r.pageSlug}`}>← {r.ownerNickname}의 인연지도 돌아가기</Link>}</section></section></Shell>}
 
 
 
@@ -268,5 +318,13 @@ function DeleteData(){
    <button disabled={busy} className="danger-button">{busy?'본인 확인 및 삭제 중...':'내 참여 기록 삭제하기'}</button>
  </form></section></Shell>}
 
-function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
-createRoot(document.getElementById('root')!).render(<BrowserRouter><App/></BrowserRouter>);
+
+class ErrorBoundary extends React.Component<{children:React.ReactNode},{error:boolean}>{
+ state={error:false};
+ static getDerivedStateFromError(){return{error:true}}
+ render(){if(this.state.error)return <Shell><div className="state-card card"><div className="state-icon">⚠️</div><h2>화면을 불러오지 못했어요</h2><p>잠시 후 다시 시도해주세요. 문제가 계속되면 처음 화면으로 돌아가 다시 이용해주세요.</p><button className="primary" onClick={()=>location.reload()}>다시 시도하기</button><Link className="secondary link" to="/">처음으로</Link></div></Shell>;return this.props.children}
+}
+function NotFound(){return <Shell><div className="state-card card"><div className="state-icon">🧭</div><p className="eyebrow">404</p><h2>찾을 수 없는 페이지예요</h2><p>주소가 잘못되었거나 삭제된 인연지도일 수 있습니다.</p><Link className="primary link" to="/">처음으로 돌아가기</Link></div></Shell>}
+
+function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="*" element={<NotFound/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
+createRoot(document.getElementById('root')!).render(<BrowserRouter><ErrorBoundary><App/></ErrorBoundary></BrowserRouter>);
