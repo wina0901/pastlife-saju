@@ -8,3 +8,18 @@
 
 /* Map-first visitor flow */
 .join-intro{margin-top:26px}.map-preview-heading{margin:40px 0 8px;text-align:center}.map-preview-heading h2{margin:6px 0 9px;font-size:25px}.map-preview-heading>p:last-child{color:#91869a;font-size:12px;line-height:1.6}.visitor-node{cursor:default}.mine-node{border:2px solid #efc8ff!important;box-shadow:0 0 0 5px #b46ee72b,0 0 34px #c27bf29a!important;z-index:9!important;animation:mineGlow 1.8s ease-in-out infinite}.mine-node em{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);font-style:normal;font-size:7px;font-weight:900;letter-spacing:.08em;color:#f4dcff;background:#7e4e9e;border:1px solid #c092df;padding:2px 5px;border-radius:999px}@keyframes mineGlow{50%{box-shadow:0 0 0 9px #b46ee711,0 0 44px #d591ffbb}}.dmine{background:#e4b5ff;box-shadow:0 0 8px #d791ff}.joined-banner{display:flex;align-items:center;gap:15px;background:linear-gradient(135deg,#2e1d3c,#1d1726);border-color:#795497}.joined-banner>span{font-size:36px}.joined-banner small{color:#b895ce;font-size:10px;font-weight:800;letter-spacing:.08em}.joined-banner h2{font-size:19px;margin:4px 0}.joined-banner p{font-size:12px;color:#9d91a5;margin:0}.detail-cta{margin-top:18px!important}.detail-hint{text-align:center;color:#897d91;font-size:11px;line-height:1.6;margin:10px 12px 20px}.visitor-share{background:transparent;cursor:pointer}.empty-public-map{text-align:center;padding:34px 20px}.empty-public-map>span{display:block;font-size:38px;margin-bottom:10px}.empty-public-map b{display:block}.empty-public-map p{font-size:12px;color:#958a9d;line-height:1.6;margin:8px 0 0}
+
+.visitor-map-section{margin-top:34px;padding-top:26px;border-top:1px solid #3a2d45}
+.map-preview-heading{text-align:center;margin-bottom:8px}
+.map-preview-heading h2{font-size:25px;margin:6px 0 9px}
+.map-preview-heading p:last-child{color:#9e91a7;font-size:12px;line-height:1.7;max-width:420px;margin:0 auto}
+.visitor-map-section .radial-card{margin-top:16px;border-color:#5a436a;box-shadow:0 0 0 1px #7f5d9120,0 18px 55px #0005}
+.visitor-map-footnote{text-align:center;color:#786d80;font-size:10px;line-height:1.5;margin-top:-7px}
+.build-version{display:none}
+
+.visitor-map-immediate{margin-top:0}
+.visitor-map-immediate>.radial-card,
+.visitor-map-immediate>.empty-public-map{margin-top:12px}
+.visitor-map-caption{text-align:center;margin:-4px 0 26px;color:#9b8fa3}
+.visitor-map-caption b{display:block;color:#d9c8e5;font-size:13px}
+.visitor-map-caption p{margin:5px 0 0;font-size:11px;line-height:1.55}

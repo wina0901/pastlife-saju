@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from 'reac
 import './styles.css';
 
 const API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-api';
+const BUILD_VERSION='visitor-map-immediate-v3-20260815';
 const DELETE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-delete';
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
@@ -124,7 +125,7 @@ function Page(){const {slug}=useParams();const [data,setData]=React.useState<any
  return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">지금까지 참여한 인연 <strong>{data.count}명</strong></div><AdSlot placement="map"/>
  {ownerMode?<><>{publicMap}{data.relationships.length>0&&<><div className="relation-list card"><div className="section-title"><span>🗂️</span><div><small>발견된 인연</small><h3>전체 인연 보기</h3></div></div>{data.relationships.map((x:any)=><Link className="relation-row" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><div><b>{x.nickname}</b><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></Link>)}</div><HighlightGrid items={data.relationships} count={data.count}/></>}<button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 잠긴 전생 기록이 열립니다.</p></>:
  mine?<><div className="joined-banner card"><span>✨</span><div><small>인연지도 참여 완료</small><h2>{mine.nickname}님이 새 인연으로 추가됐어요</h2><p>지도에서 빛나는 노드가 내 자리입니다.</p></div></div>{publicMap}<Link className="primary link detail-cta" to={`/result/${mine.id}`}>나와 {data.owner_nickname}의 관계 자세히 보기</Link><p className="detail-hint">전생 역할 · 관계 점수 · 사주 근거 · 전생 이야기를 확인할 수 있어요.</p><button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button></>:
- <><div className="join-intro"><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">먼저 아래에 내 정보를 입력해보세요. 참여하기 전에도 현재까지 완성된 인연지도를 볼 수 있습니다.</p></div><PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/><div className="map-preview-heading"><p className="eyebrow">LIVE MAP</p><h2>벌써 {data.count}명이<br/>{data.owner_nickname}의 지도에 들어왔어요</h2><p>정보를 입력하면 나도 이 지도에 새로운 인연으로 추가됩니다.</p></div>{publicMap}</>}
+ <><div className="join-intro"><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">내 정보를 입력하면 이 지도에 나의 자리도 추가됩니다.</p></div><PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/><section className="visitor-map-immediate">{publicMap}<div className="visitor-map-caption"><b>현재 {data.count}명이 {data.owner_nickname}의 인연지도에 참여했어요</b><p>정보를 입력하기 전에도 현재 인연지도를 볼 수 있습니다.</p></div></section><span className="build-version">{BUILD_VERSION}</span></>}
  </section></Shell>}
 function ScoreBars({scores}:{scores:Record<string,number>}){return <div className="scores card"><div className="section-title"><span>☯</span><div><small>현생에 남은 흔적</small><h3>두 사람의 인연 지표</h3></div></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div></div>})}</div>}
 
