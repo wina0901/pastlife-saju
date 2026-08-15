@@ -18,6 +18,22 @@ const relationIcon=(code?:string,label?:string)=>{
  return '🔮';
 };
 
+const scoreOf=(r:any,key:string)=>Number(r?.scores?.[key]||0);
+const maxBy=(items:any[],get:(x:any)=>number)=>items.length?[...items].sort((a,b)=>get(b)-get(a))[0]:null;
+
+function buildHighlights(items:any[]){
+ const deepest=maxBy(items,r=>scoreOf(r,'인연의깊이'));
+ const benefactor=maxBy(items,r=>scoreOf(r,'서로에게주는영향'));
+ const rival=maxBy(items,r=>scoreOf(r,'충돌'));
+ const sticky=maxBy(items,r=>scoreOf(r,'질긴인연'));
+ return [
+  {need:3,icon:'💫',title:'가장 깊은 인연',item:deepest,score:deepest?scoreOf(deepest,'인연의깊이'):0},
+  {need:7,icon:'💎',title:'나의 귀인',item:benefactor,score:benefactor?scoreOf(benefactor,'서로에게주는영향'):0},
+  {need:10,icon:'🔥',title:'숙명의 라이벌',item:rival,score:rival?scoreOf(rival,'충돌'):0},
+  {need:15,icon:'🪢',title:'가장 질긴 인연',item:sticky,score:sticky?scoreOf(sticky,'질긴인연'):0},
+ ];
+}
+
 function PersonForm({buttonText,onSubmit}:{buttonText:string,onSubmit:(v:PersonInput)=>Promise<void>|void}){
  const [nickname,setNickname]=useState(''); const [birthDate,setBirthDate]=useState(''); const [birthTime,setBirthTime]=useState(''); const [calendarType,setCalendarType]=useState<'solar'|'lunar'>('solar'); const [busy,setBusy]=useState(false);
  return <form onSubmit={async e=>{e.preventDefault();setBusy(true);try{await onSubmit({nickname,birthDate,birthTime,calendarType})}finally{setBusy(false)}}} className="card form">
@@ -35,13 +51,15 @@ function Home(){return <Shell><section className="hero"><div className="orb">☯
 
 function Create(){const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok) return alert(d.error||'생성에 실패했습니다.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);nav(`/n/${d.slug}`)};return <Shell><section><p className="eyebrow">STEP 1</p><h1>먼저 당신을 알려주세요</h1><p className="muted">한 번 만들면 친구에게 공유할 수 있는 나만의 주소가 생깁니다.</p><PersonForm buttonText="내 사주로 지도 만들기" onSubmit={submit}/></section></Shell>}
 
+function HighlightGrid({items,count}:{items:any[];count:number}){const hs=buildHighlights(items);return <div className="highlight-wrap"><div className="highlight-head"><p className="eyebrow">인연 분석</p><h2>친구들이 채워주는<br/>나의 전생 기록</h2></div><div className="highlight-grid">{hs.map(h=>{const unlocked=count>=h.need&&h.item;const left=Math.max(0,h.need-count);return <div className={`highlight-card ${unlocked?'unlocked':'locked-highlight'}`} key={h.title}>{unlocked?<><span className="highlight-icon">{h.icon}</span><small>{h.title}</small><b>{h.item.nickname}</b><em>{h.item.relationship_type}</em><strong>{h.score}</strong></>:<><span className="highlight-icon">🔒</span><small>{h.title}</small><b>{left}명 더 필요</b><em>{count} / {h.need}</em><div className="mini-progress"><span style={{width:`${Math.min(100,(count/h.need)*100)}%`}}/></div></>}</div>})}</div></div>}
+
 function Page(){const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);
  const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}`);const d=await r.json();setData(r.ok?d:null)}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);
  if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
  const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');location.href=`/result/${d.relationship_id}`};
  const share=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
  return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">발견된 인연 <strong>{data.count}명</strong></div>
- {ownerMode?<><div className="map card">{data.relationships.length===0?<p>아직 발견된 인연이 없습니다.<br/>친구에게 이 페이지 주소를 공유해보세요.</p>:<><div className="map-owner"><span>☯</span><b>{data.owner_nickname}</b></div><div className="relation-grid">{data.relationships.map((x:any)=><Link className="relation-chip" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><b>{x.nickname}</b><span>{x.relationship_type}</span></Link>)}</div></>}</div><button className="primary" onClick={share}>친구에게 공유하기</button><div className="locked card"><b>🔒 친구가 더 참여하면</b><p>가장 깊은 인연 · 귀인 · 숙명의 라이벌 같은 추가 분석을 열 수 있어요.</p></div></>:<><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">내 정보만 입력하면 두 사람의 사주 관계를 전생 이야기로 풀어드립니다.</p><PersonForm buttonText="우리의 전생 찾기" onSubmit={submit}/></>}
+ {ownerMode?<><div className="map card">{data.relationships.length===0?<p>아직 발견된 인연이 없습니다.<br/>친구에게 이 페이지 주소를 공유해보세요.</p>:<><div className="map-owner"><span>☯</span><b>{data.owner_nickname}</b></div><div className="relation-grid">{data.relationships.map((x:any)=><Link className="relation-chip" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><b>{x.nickname}</b><span>{x.relationship_type}</span></Link>)}</div></>}</div>{data.relationships.length>0&&<HighlightGrid items={data.relationships} count={data.count}/>}<button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 잠긴 전생 기록이 열립니다.</p></>:<><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">내 정보만 입력하면 두 사람의 사주 관계를 전생 이야기로 풀어드립니다.</p><PersonForm buttonText="우리의 전생 찾기" onSubmit={submit}/></>}
  </section></Shell>}
 
 function ScoreBars({scores}:{scores:Record<string,number>}){return <div className="scores card"><div className="section-title"><span>☯</span><div><small>현생에 남은 흔적</small><h3>두 사람의 인연 지표</h3></div></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div></div>})}</div>}
