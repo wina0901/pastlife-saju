@@ -1109,3 +1109,59 @@ footer{
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
+
+
+/* =========================================================
+   FIX: 전생 역할(길잡이/동행자/의형/의제 등) 원형 pill 제거
+   ========================================================= */
+.role-badge,
+.role-tag,
+.role-pill,
+.role-card em,
+.role-box em,
+.person-role em,
+.role-side em,
+.role-pair em,
+.roles em {
+  display: inline !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+
+  color: #8a6546 !important;
+  -webkit-text-fill-color: #8a6546 !important;
+
+  font-style: normal !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+}
+
+/* 내부 태그가 별도로 색/배경을 가진 경우까지 제거 */
+.role-badge *,
+.role-tag *,
+.role-pill *,
+.role-card em *,
+.role-box em *,
+.person-role em *,
+.role-side em *,
+.role-pair em *,
+.roles em * {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #8a6546 !important;
+  -webkit-text-fill-color: #8a6546 !important;
+}
