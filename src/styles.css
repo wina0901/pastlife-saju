@@ -576,3 +576,72 @@ footer{
 
 .center-person b{font-size:13px!important}
 .center-person small{font-size:9px!important;color:#9a7a5d!important}
+
+/* 상단 헤더 정리 */
+.site-header{
+  width:100%!important;
+  max-width:none!important;
+  min-height:64px!important;
+  padding:0 24px!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:20px!important;
+  background:rgba(255,253,249,.96)!important;
+  border-bottom:1px solid #e9dfd2!important;
+  box-sizing:border-box!important;
+}
+
+.site-header .brand{
+  display:flex!important;
+  align-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:16px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  text-decoration:none!important;
+  color:#3b3026!important;
+}
+
+.site-header .top-nav{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:20px!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+.site-header .top-nav a{
+  margin:0!important;
+  padding:8px 0!important;
+  font-size:13px!important;
+  font-weight:600!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  text-decoration:none!important;
+  color:#746454!important;
+}
+
+.site-header .top-nav a:hover{
+  color:#9a714d!important;
+}
+
+@media(max-width:520px){
+  .site-header{
+    min-height:58px!important;
+    padding:0 16px!important;
+  }
+  .site-header .brand{
+    font-size:14px!important;
+  }
+  .site-header .top-nav{
+    gap:13px!important;
+  }
+  .site-header .top-nav a{
+    font-size:11px!important;
+  }
+}
