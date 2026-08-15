@@ -8,7 +8,7 @@ const DELETE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
-const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header><Link to="/" className="brand">사주로 보는 전생의 인연</Link></header>{children}<footer><nav className="footer-links"><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
+const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link><nav className="top-nav"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/faq">FAQ</Link></nav></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/faq">FAQ</Link><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
 
 const relationIcon=(code?:string,label?:string)=>{
  const byCode:Record<string,string>={KING_LOYALIST:'👑',KING_ADVISOR:'📜',COMRADES:'⚔️',TEACHER_STUDENT:'📖',RIVALS:'🔥',OLD_FRIENDS:'🤝',UNFINISHED_LOVERS:'💘',BENEFACTOR:'💎',MERCHANT_RIVALS:'💰',TROUBLE_FIXER:'💥',GUARD_ROYAL:'🛡️',FOES_TO_FRIENDS:'🪢',SIBLINGS:'🏠',WANDERERS:'🧭',HEALER_PATIENT:'🌿',PATRON_ARTIST:'🎨',FORBIDDEN_LOVE:'🌙',ONE_SIDED_LOVE:'💌',NEIGHBOR_RIVALS:'🏘️',CAPTAIN_NAVIGATOR:'⛵'};
@@ -36,7 +36,9 @@ function buildHighlights(items:any[]){
 }
 
 
+const ADS_PREVIEW=false;
 function AdSlot({placement='content'}:{placement?:string}){
+ if(!ADS_PREVIEW)return null;
  return <aside className={`ad-slot ad-${placement}`} aria-label="광고 영역">
    <div className="ad-label">ADVERTISEMENT</div>
    <div className="ad-placeholder">
@@ -189,6 +191,16 @@ function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null
  <button className="primary share-btn" onClick={share}>링크로 결과 공유하기</button>{r.pageSlug&&<Link className="secondary link" to={`/n/${r.pageSlug}`}>전생 인연지도 돌아가기</Link>}<Link className="ghost-link" to="/create">나도 내 전생 인연지도 만들기 →</Link></section></Shell>}
 
 
+
+const RELATION_GUIDE=[
+['👑','임금과 충신','책임과 신뢰가 강하게 연결된 인연'],['📜','임금과 책사','결단과 조언이 맞물리는 인연'],['⚔️','목숨을 맡긴 전우','위기에서 서로를 믿는 인연'],['📖','스승과 제자','배움과 성장의 영향을 주고받는 인연'],['🔥','숙명의 라이벌','부딪치면서 서로를 성장시키는 인연'],['🤝','평생의 벗','편안함과 신뢰가 오래 이어지는 인연'],['💘','이루지 못한 연인','강한 끌림과 아쉬움이 함께 남는 인연'],['💎','목숨을 구한 은인','한 사람이 다른 사람에게 큰 힘이 되는 인연'],['💰','상단의 경쟁자','목표를 두고 실력을 겨루는 인연'],['💥','사고뭉치와 해결사','문제를 만들고 수습하며 맞물리는 인연'],['🛡️','호위무사와 왕족','보호와 책임이 강하게 드러나는 인연'],['🪢','원수에서 친구로','충돌해도 쉽게 끊어지지 않는 인연'],['🏠','한집의 형제자매','티격태격해도 익숙함이 남는 인연'],['🧭','길 위에서 만난 동행','같은 방향을 바라보며 함께하는 인연'],['🌿','치유자와 환자','회복과 안정에 영향을 주는 인연'],['🎨','후원자와 예술가','재능을 알아보고 밀어주는 인연'],['🌙','금지된 사랑','끌림과 제약이 동시에 강한 인연'],['💌','엇갈린 짝사랑','마음의 속도와 방향이 다른 인연'],['🏘️','이웃 마을 라이벌','가깝기에 더 자주 경쟁하는 인연'],['⛵','선장과 항해사','목표와 방향을 함께 맞추는 인연'],['⚔️','장군과 부관','결단과 실행이 맞물리는 인연'],['🩸','피보다 진한 의형제','선택한 신뢰가 가족처럼 깊어진 인연'],['🏃','도망친 혼례의 두 사람','강한 결속과 변화 욕구가 함께하는 인연'],['🍶','주막 주인과 단골','반복된 만남이 만든 편안한 인연'],['🧹','주인과 말 안 듣는 하인','부딪치면서 계속 엮이는 인연'],['🛟','위기에서 만난 구조자','필요한 순간 큰 영향을 남기는 인연'],['🍃','스쳐 지나간 오래된 인연','강렬하지 않아도 익숙하게 느껴지는 인연']];
+
+function About(){return <Shell><article className="editorial"><p className="eyebrow">ABOUT</p><h1>사주로 보는<br/>전생의 인연</h1><p className="lead">친구와 나의 관계를 숫자 하나로 끝내지 않고, 한 편의 전생 이야기처럼 즐길 수 있도록 만든 소셜 사주 콘텐츠입니다.</p><section><h2>왜 만들었나요?</h2><p>궁합이나 성격 테스트는 결과만큼 “우리 진짜 이렇지 않아?”라고 이야기하는 과정이 재미있습니다. 이 서비스는 한 사람의 테스트에서 끝내지 않고 친구들이 하나의 페이지에 모여 관계 지도를 함께 완성하도록 설계했습니다.</p></section><section><h2>어떻게 해석하나요?</h2><p>생년월일을 바탕으로 두 사람 사이의 오행 상생·상극과 합·충·형·파·해·원진 같은 관계 요소를 조합합니다. 그 특징에 가까운 관계 유형을 고른 뒤 역할, 인연 지표와 전생 이야기로 보여줍니다.</p><p>출생시간은 선택 정보라 몰라도 이용할 수 있습니다.</p></section><section><h2>결과는 사실인가요?</h2><p>실제 전생을 확인하는 서비스가 아닙니다. 전통 명리 요소에서 아이디어를 얻은 엔터테인먼트 해석으로, 친구들과 대화를 시작하는 재미있는 소재로 이용해 주세요.</p></section><section><h2>친구가 참여하면</h2><p>페이지 주인을 중심으로 친구들이 인연지도에 쌓입니다. 인연의 깊이에 따라 거리가 달라지고 참여자가 늘어나면 가장 깊은 인연, 귀인, 라이벌 같은 추가 기록도 열립니다.</p></section><Link className="primary link" to="/create">내 인연지도 만들어보기</Link></article></Shell>}
+
+function Guide(){return <Shell><article className="editorial"><p className="eyebrow">RELATION GUIDE</p><h1>27가지<br/>전생 인연</h1><p className="lead">두 사람의 사주 관계 특징에 따라 만날 수 있는 전생 관계들을 소개합니다.</p><div className="guide-grid">{RELATION_GUIDE.map(([i,t,d])=><section className="guide-item" key={t}><span>{i}</span><div><h2>{t}</h2><p>{d}</p></div></section>)}</div><section className="guide-note"><h2>점수가 높으면 무조건 좋은 관계인가요?</h2><p>아닙니다. 인연의 깊이, 서로에게 주는 영향, 충돌, 질긴 인연은 서로 다른 관계 특징을 표현합니다. 높고 낮음 자체가 관계의 좋고 나쁨을 뜻하지 않습니다.</p></section></article></Shell>}
+
+function FAQ(){const q=[['출생시간을 몰라도 할 수 있나요?','네. 출생시간은 선택 입력이라 비워두고 진행할 수 있습니다.'],['친구가 제 생년월일을 볼 수 있나요?','아니요. 입력한 생년월일과 출생시간은 다른 이용자에게 공개하지 않습니다.'],['반대쪽 페이지에서도 같은 결과가 나오나요?','같은 두 사람은 방향이 바뀌어도 동일한 핵심 관계가 유지되도록 설계했습니다. 방향성이 있는 역할은 서로 대응됩니다.'],['실제 전생을 알려주는 건가요?','아닙니다. 전통 명리 관계 요소를 활용한 엔터테인먼트 콘텐츠입니다.'],['정보를 삭제할 수 있나요?','네. 하단의 참여정보 삭제 메뉴에서 해당 친구 페이지에 남긴 참여 기록을 삭제할 수 있습니다.'],['문의는 어디로 하나요?','서비스 및 개인정보 문의는 kikine901@gmail.com 으로 보내주세요.']];return <Shell><article className="editorial"><p className="eyebrow">FAQ</p><h1>자주 묻는 질문</h1><p className="lead">서비스 이용 전에 궁금할 만한 내용을 모았습니다.</p><div className="faq-list">{q.map(([a,b])=><details key={a}><summary>{a}</summary><p>{b}</p></details>)}</div><div className="contact-card"><span>✉️</span><div><b>더 궁금한 점이 있나요?</b><a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></div></div></article></Shell>}
+
 function LegalLayout({title,updated,children}:{title:string;updated:string;children:React.ReactNode}){return <Shell><article className="legal"><p className="eyebrow">SERVICE POLICY</p><h1>{title}</h1><p className="legal-updated">최종 수정: {updated}</p>{children}<div className="draft-notice"><b>MVP 운영 안내</b><p>정식 공개 전 서비스 운영자명·연락처·사업자 정보(해당 시)를 최종 확정하여 이 문서에 추가해야 합니다.</p></div></article></Shell>}
 
 function Privacy(){return <LegalLayout title="개인정보처리방침" updated="2026.08.15">
@@ -230,5 +242,5 @@ function DeleteData(){
    <button disabled={busy} className="danger-button">{busy?'본인 확인 및 삭제 중...':'내 참여 기록 삭제하기'}</button>
  </form></section></Shell>}
 
-function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
+function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
 createRoot(document.getElementById('root')!).render(<BrowserRouter><App/></BrowserRouter>);
