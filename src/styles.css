@@ -1037,3 +1037,25 @@ footer{
 .deep-story-present>b{display:block;margin-bottom:7px;color:#805e40!important;font-size:12px}
 .deep-story-present>p{margin:0;color:#6d5a49!important;font-size:11px;line-height:1.85}
 .deep-story-note{margin:12px 0 0!important;color:#a18d7b!important;font-size:9px!important;line-height:1.6!important}
+
+
+/* 개인 관계 화면 - 의형/의제 등 역할 배지 글씨 가독성 */
+.role-card em,
+.role-box em,
+.person-role em,
+.role-side em,
+.role-pair em,
+.roles em,
+.role-badge{
+  color:#ffffff!important;
+}
+
+/* 실제 역할 pill이 span으로 구성된 경우까지 대응 */
+.role-pair .role-badge,
+.role-pair .role-tag,
+.role-card .role-badge,
+.role-card .role-tag,
+.roles .role-badge,
+.roles .role-tag{
+  color:#ffffff!important;
+}
