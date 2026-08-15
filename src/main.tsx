@@ -56,7 +56,7 @@ function HighlightGrid({items,count}:{items:any[];count:number}){const hs=buildH
 function RadialMap({owner,items}:{owner:string;items:any[]}){
  const maxVisible=16;
  const visible=items.slice(0,maxVisible);
- const nodes=visible.map((item:any,index:number)=>{
+ const nodes=visible.map((item:any)=>{
    const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
    const ring=score>=88?0:score>=75?1:2;
    const radii=[30,39,47];
@@ -92,15 +92,69 @@ function Page(){const {slug}=useParams();const [data,setData]=React.useState<any
 
 function ScoreBars({scores}:{scores:Record<string,number>}){return <div className="scores card"><div className="section-title"><span>☯</span><div><small>현생에 남은 흔적</small><h3>두 사람의 인연 지표</h3></div></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div></div>})}</div>}
 
-function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null);const [error,setError]=React.useState(false);React.useEffect(()=>{fetch(`${API}/relationships/${encodeURIComponent(id||'')}`).then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j)}).catch(()=>setError(true))},[id]);if(error)return <Shell><div className="card">전생 기록을 찾을 수 없습니다.</div></Shell>;if(!d?.relationship)return <Shell><div className="card loading-card">두 사람의 전생 기록을 펼치는 중...</div></Shell>;
+function drawRoundRect(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,r:number,fill:string,stroke?:string){
+ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fillStyle=fill; ctx.fill(); if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}
+}
+function fitText(ctx:CanvasRenderingContext2D,text:string,maxWidth:number,startSize:number,minSize=28,weight=800){
+ let size=startSize; do{ctx.font=`${weight} ${size}px "Apple SD Gothic Neo","Noto Sans KR",sans-serif`;if(ctx.measureText(text).width<=maxWidth)break;size-=2;}while(size>minSize);return size;
+}
+function wrapCanvasText(ctx:CanvasRenderingContext2D,text:string,x:number,y:number,maxWidth:number,lineHeight:number,maxLines=4){
+ const words=text.replace(/\n/g,' \n ').split(/\s+/);let line='';let yy=y;let lines=0;
+ for(let i=0;i<words.length;i++){if(words[i]==='\n'){ctx.fillText(line,x,yy);line='';yy+=lineHeight;lines++;continue}
+   const test=line?`${line} ${words[i]}`:words[i];
+   if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,yy);line=words[i];yy+=lineHeight;lines++;if(lines>=maxLines-1)break}else line=test;
+ }
+ if(line&&lines<maxLines)ctx.fillText(line,x,yy);
+}
+
+async function makeStoryCard(r:any){
+ const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1920;const ctx=canvas.getContext('2d')!;
+ const bg=ctx.createLinearGradient(0,0,1080,1920);bg.addColorStop(0,'#2d1d3a');bg.addColorStop(.42,'#17101f');bg.addColorStop(1,'#0d0912');ctx.fillStyle=bg;ctx.fillRect(0,0,1080,1920);
+ const glow=ctx.createRadialGradient(540,340,20,540,340,470);glow.addColorStop(0,'rgba(181,112,225,.24)');glow.addColorStop(1,'rgba(181,112,225,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,1080,850);
+ ctx.textAlign='center';ctx.fillStyle='#c9abe8';ctx.font='800 30px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText('사주로 보는 전생의 인연',540,110);
+ ctx.font='110px sans-serif';ctx.fillText(relationIcon(r.typeCode,r.label),540,305);
+ ctx.fillStyle='#c9ace4';ctx.font='700 27px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText(r.era||'전생 기록',540,385);
+ ctx.fillStyle='#ffffff';fitText(ctx,r.label,850,78,44,900);ctx.fillText(r.label,540,500);
+ ctx.fillStyle='#efe4f7';ctx.font='800 38px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText(`${r.ownerNickname}  ×  ${r.participantNickname}`,540,575);
+
+ drawRoundRect(ctx,110,655,860,260,38,'rgba(27,19,35,.88)','#49375a');
+ ctx.fillStyle='#8f8198';ctx.font='700 22px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText('전생의 역할',540,710);
+ ctx.fillStyle='#fff';ctx.font='800 33px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText(r.ownerNickname,320,790);ctx.fillText(r.participantNickname,760,790);
+ ctx.fillStyle='#d9bff0';ctx.font='700 28px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText(r.ownerRole,320,845);ctx.fillText(r.participantRole,760,845);
+
+ drawRoundRect(ctx,110,960,860,330,38,'rgba(27,19,35,.88)','#49375a');
+ ctx.textAlign='left';ctx.fillStyle='#c9abe8';ctx.font='800 23px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText('전생의 한마디',165,1025);
+ ctx.fillStyle='#f3e8fb';ctx.font='700 36px Georgia,"Noto Serif KR",serif';wrapCanvasText(ctx,`“${r.oneLiner||''}”`,165,1100,750,55,4);
+
+ const scores=Object.entries(r.scores||{}).slice(0,3) as [string,any][];
+ let sy=1375;ctx.textAlign='left';
+ for(const [k,v] of scores){const n=Math.max(0,Math.min(100,Number(v)||0));ctx.fillStyle='#bfb2c8';ctx.font='700 25px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText(k,145,sy);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.fillText(String(n),935,sy);ctx.textAlign='left';drawRoundRect(ctx,145,sy+22,790,13,7,'#1b1422');const g=ctx.createLinearGradient(145,0,935,0);g.addColorStop(0,'#794d9e');g.addColorStop(1,'#c88bf2');drawRoundRect(ctx,145,sy+22,790*(n/100),13,7,g as any);sy+=105;}
+
+ ctx.textAlign='center';ctx.fillStyle='#eee3f4';ctx.font='900 31px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText('우리도 전생에 만난 적이 있을까?',540,1760);
+ ctx.fillStyle='#887a92';ctx.font='600 22px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText('사주로 보는 전생의 인연',540,1810);
+ ctx.fillStyle='#5f5368';ctx.font='500 18px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';ctx.fillText('엔터테인먼트용 사주 해석 콘텐츠',540,1850);
+ return await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('이미지 생성 실패')),'image/png',1));
+}
+
+async function shareStoryCard(r:any){
+ try{
+   const blob=await makeStoryCard(r);const file=new File([blob],`전생인연-${r.ownerNickname}-${r.participantNickname}.png`,{type:'image/png'});
+   if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'사주로 보는 전생의 인연',text:`${r.ownerNickname} × ${r.participantNickname} · ${r.label}`});return;}
+   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);alert('스토리용 이미지가 저장되었습니다.');
+ }catch(e){console.error(e);alert('이미지 생성 중 오류가 발생했습니다.');}
+}
+
+function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null);const [error,setError]=React.useState(false);const [making,setMaking]=React.useState(false);React.useEffect(()=>{fetch(`${API}/relationships/${encodeURIComponent(id||'')}`).then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j)}).catch(()=>setError(true))},[id]);if(error)return <Shell><div className="card">전생 기록을 찾을 수 없습니다.</div></Shell>;if(!d?.relationship)return <Shell><div className="card loading-card">두 사람의 전생 기록을 펼치는 중...</div></Shell>;
  const r=d.relationship;const icon=relationIcon(r.typeCode,r.label);const basis=r.analysisBasis;const factors=Array.isArray(basis?.key_factors)?basis.key_factors:[];
  const share=async()=>{const url=location.href;const text=`${r.ownerNickname} × ${r.participantNickname}\n${icon} ${r.label}\n“${r.oneLiner}”`;if(navigator.share){try{await navigator.share({title:'사주로 보는 전생의 인연',text,url});return}catch{}}await navigator.clipboard.writeText(`${text}\n${url}`);alert('결과와 링크를 복사했습니다.');};
+ const storyShare=async()=>{setMaking(true);try{await shareStoryCard(r)}finally{setMaking(false)}};
  return <Shell><section className="result"><div className="result-hero"><p className="eyebrow">사주로 보는 전생의 인연</p><div className="result-icon">{icon}</div><p className="era">{r.era}</p><h1>{r.label}</h1><p className="pair">{r.ownerNickname} <span>×</span> {r.participantNickname}</p><p className="result-quote">“{r.oneLiner}”</p></div>
  <div className="card roles"><div><small>전생의 역할</small><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><small>전생의 역할</small><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div>
  <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
  <ScoreBars scores={r.scores||{}}/>
  {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}
- <button className="primary share-btn" onClick={share}>결과 공유하기</button>{r.pageSlug&&<Link className="secondary link" to={`/n/${r.pageSlug}`}>전생 인연지도 돌아가기</Link>}<Link className="ghost-link" to="/create">나도 내 전생 인연지도 만들기 →</Link></section></Shell>}
+ <div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 이미지</b><p>9:16 비율의 결과 카드를 만들어 공유할 수 있어요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div>
+ <button className="primary share-btn" onClick={share}>링크로 결과 공유하기</button>{r.pageSlug&&<Link className="secondary link" to={`/n/${r.pageSlug}`}>전생 인연지도 돌아가기</Link>}<Link className="ghost-link" to="/create">나도 내 전생 인연지도 만들기 →</Link></section></Shell>}
 
 function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/result/:id" element={<Result/>}/></Routes>}
 createRoot(document.getElementById('root')!).render(<BrowserRouter><App/></BrowserRouter>);
