@@ -129,3 +129,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
  .my-rank-summary>div{padding-left:4px;padding-right:4px}
  .my-rank-summary strong{font-size:20px}
 }
+
+.visitor-map-top{margin-top:18px}
+.visitor-input-section{margin-top:30px;padding-top:26px;border-top:1px solid #382b43}
+.visitor-input-section .join-intro{margin-bottom:12px}
+.visitor-unlock-section{margin-top:34px;padding-top:8px}

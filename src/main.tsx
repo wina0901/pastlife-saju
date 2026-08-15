@@ -199,7 +199,22 @@ function Page(){const {slug}=useParams();const [data,setData]=React.useState<any
    <p className="detail-hint">이 상세 결과는 본인 관계만 열 수 있어요.</p>
    <button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button>
  </section></>:
- <><section className="visitor-map-top">{publicMap}<RelationshipRanking items={data.relationships}/><HighlightGrid items={data.relationships} count={data.count}/><div className="visitor-map-caption"><b>현재 {data.count}명이 {data.owner_nickname}의 인연지도에 참여했어요</b><p>나도 참여하면 이 지도에 새로운 인연으로 추가됩니다.</p></div></section><div className="join-intro below-map"><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">아래에 내 정보를 입력하면 광고 시청 후 지도에 내 자리가 추가됩니다.</p></div><PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/><span className="build-version">{BUILD_VERSION}</span></>}
+ <><section className="visitor-map-top">
+  {publicMap}
+  <RelationshipRanking items={data.relationships}/>
+</section>
+<section className="visitor-input-section">
+  <div className="join-intro">
+    <p className="eyebrow">내 인연 추가하기</p>
+    <h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2>
+    <p className="muted">아래에 내 정보를 입력하면 광고 시청 후 {data.owner_nickname}의 인연지도에 내 자리가 추가됩니다.</p>
+  </div>
+  <PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/>
+</section>
+<section className="visitor-unlock-section">
+  <HighlightGrid items={data.relationships} count={data.count}/>
+</section>
+<span className="build-version">{BUILD_VERSION}</span></>}
  </section></Shell>}
 function ScoreBars({scores}:{scores:Record<string,number>}){return <div className="scores card"><div className="section-title"><span>☯</span><div><small>현생에 남은 흔적</small><h3>두 사람의 인연 지표</h3></div></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div></div>})}</div>}
 
