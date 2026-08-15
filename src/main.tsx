@@ -13,7 +13,7 @@ const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST'
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
-const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link><nav className="top-nav"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/faq">FAQ</Link></nav></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/faq">FAQ</Link><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
+const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link><nav className="top-nav"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link></nav></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
 
 const relationIcon=(code?:string,label?:string)=>{
  const byCode:Record<string,string>={KING_LOYALIST:'👑',KING_ADVISOR:'📜',COMRADES:'⚔️',TEACHER_STUDENT:'📖',RIVALS:'🔥',OLD_FRIENDS:'🤝',UNFINISHED_LOVERS:'💘',BENEFACTOR:'💎',MERCHANT_RIVALS:'💰',TROUBLE_FIXER:'💥',GUARD_ROYAL:'🛡️',FOES_TO_FRIENDS:'🪢',SIBLINGS:'🏠',WANDERERS:'🧭',HEALER_PATIENT:'🌿',PATRON_ARTIST:'🎨',FORBIDDEN_LOVE:'🌙',ONE_SIDED_LOVE:'💌',NEIGHBOR_RIVALS:'🏘️',CAPTAIN_NAVIGATOR:'⛵'};
@@ -52,6 +52,7 @@ function buildHighlights(items:any[]){
 
 
 const ADS_PREVIEW=false;
+const ADSENSE_REVIEW_MODE=true;
 function AdSlot({placement='content'}:{placement?:string}){
  if(!ADS_PREVIEW)return null;
  return <aside className={`ad-slot ad-${placement}`} aria-label="광고 영역">
@@ -68,6 +69,11 @@ function AdGate(){
  const params=new URLSearchParams(location.search);
  const pageSlug=params.get('page')||'';
  const target=params.get('target')||'';
+ React.useEffect(()=>{if(!ADSENSE_REVIEW_MODE)return;
+   if(target==='saju')nav(`/saju/${encodeURIComponent(id||'')}`,{replace:true});
+   else if(pageSlug)nav(`/n/${encodeURIComponent(pageSlug)}?mine=${encodeURIComponent(id||'')}`,{replace:true});
+   else nav(`/result/${id}`,{replace:true});
+ },[]);
  React.useEffect(()=>{const t=setTimeout(()=>{setStage('ad');track('ad_reached',{page_slug:pageSlug,relationship_id:id})},1300);return()=>clearTimeout(t)},[]);
  React.useEffect(()=>{if(stage!=='ad')return;const t=setInterval(()=>setLeft(v=>{if(v<=1){clearInterval(t);return 0}return v-1}),1000);return()=>clearInterval(t)},[stage]);
  const go=()=>{if(left!==0)return;
@@ -538,7 +544,7 @@ function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null
  <div className="card roles"><div><small>전생의 역할</small><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><small>전생의 역할</small><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div>
  <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
  <ScoreBars scores={r.scores||{}}/><AdSlot placement="result"/>
- {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}<div className="deep-unlock-card card"><span>🔐</span><div><small>PREMIUM INTERPRETATION</small><h3>사주 해석 자세히 보기</h3><p>두 사람의 오행, 사주 기둥, 합·충 요소와 관계 성향을 더 자세히 확인할 수 있어요.</p></div><Link className="primary link" to={`/ad/${id}?target=saju`}>광고 보고 자세히 보기</Link></div>
+ {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}<div className="deep-unlock-card card"><span>🔐</span><div><small>PREMIUM INTERPRETATION</small><h3>사주 해석 자세히 보기</h3><p>두 사람의 오행, 사주 기둥, 합·충 요소와 관계 성향을 더 자세히 확인할 수 있어요.</p></div><Link className="primary link" to={ADSENSE_REVIEW_MODE?`/saju/${id}`:`/ad/${id}?target=saju`}>{ADSENSE_REVIEW_MODE?"심층 사주 해석 보기":"광고 보고 자세히 보기"}</Link></div>
  <section className="viral-result-section"><div className="viral-result-head"><p className="eyebrow">SHARE YOUR FATE</p><h2>이 결과, 친구에게도<br/>보여주고 싶지 않나요?</h2><p>결과를 공유하거나 내 인연지도를 만들면 또 다른 친구들과 전생 관계를 비교할 수 있어요.</p></div><div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 결과 카드</b><p>관계 유형과 점수가 담긴 9:16 이미지를 만들어 공유하세요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div><button className="primary share-btn" onClick={share}>친구에게 이 결과 공유하기</button><div className="become-owner-card card"><span>🔮</span><div><small>이번에는 내가 중심이 되어볼 차례</small><h3>내 전생 인연지도 만들기</h3><p>내 링크를 만들고 친구들을 초대하면 누가 나와 가장 깊은 인연인지 랭킹으로 확인할 수 있어요.</p></div><Link className="primary link" to="/create">내 인연지도 만들기</Link></div>{r.pageSlug&&<Link className="secondary link return-map-btn" to={`/n/${r.pageSlug}`}>← {r.ownerNickname}의 인연지도 돌아가기</Link>}</section></section></Shell>}
 
 
@@ -546,9 +552,31 @@ function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null
 const RELATION_GUIDE=[
 ['👑','임금과 충신','책임과 신뢰가 강하게 연결된 인연'],['📜','임금과 책사','결단과 조언이 맞물리는 인연'],['⚔️','목숨을 맡긴 전우','위기에서 서로를 믿는 인연'],['📖','스승과 제자','배움과 성장의 영향을 주고받는 인연'],['🔥','숙명의 라이벌','부딪치면서 서로를 성장시키는 인연'],['🤝','평생의 벗','편안함과 신뢰가 오래 이어지는 인연'],['💘','이루지 못한 연인','강한 끌림과 아쉬움이 함께 남는 인연'],['💎','목숨을 구한 은인','한 사람이 다른 사람에게 큰 힘이 되는 인연'],['💰','상단의 경쟁자','목표를 두고 실력을 겨루는 인연'],['💥','사고뭉치와 해결사','문제를 만들고 수습하며 맞물리는 인연'],['🛡️','호위무사와 왕족','보호와 책임이 강하게 드러나는 인연'],['🪢','원수에서 친구로','충돌해도 쉽게 끊어지지 않는 인연'],['🏠','한집의 형제자매','티격태격해도 익숙함이 남는 인연'],['🧭','길 위에서 만난 동행','같은 방향을 바라보며 함께하는 인연'],['🌿','치유자와 환자','회복과 안정에 영향을 주는 인연'],['🎨','후원자와 예술가','재능을 알아보고 밀어주는 인연'],['🌙','금지된 사랑','끌림과 제약이 동시에 강한 인연'],['💌','엇갈린 짝사랑','마음의 속도와 방향이 다른 인연'],['🏘️','이웃 마을 라이벌','가깝기에 더 자주 경쟁하는 인연'],['⛵','선장과 항해사','목표와 방향을 함께 맞추는 인연'],['⚔️','장군과 부관','결단과 실행이 맞물리는 인연'],['🩸','피보다 진한 의형제','선택한 신뢰가 가족처럼 깊어진 인연'],['🏃','도망친 혼례의 두 사람','강한 결속과 변화 욕구가 함께하는 인연'],['🍶','주막 주인과 단골','반복된 만남이 만든 편안한 인연'],['🧹','주인과 말 안 듣는 하인','부딪치면서 계속 엮이는 인연'],['🛟','위기에서 만난 구조자','필요한 순간 큰 영향을 남기는 인연'],['🍃','스쳐 지나간 오래된 인연','강렬하지 않아도 익숙하게 느껴지는 인연']];
 
-function About(){return <Shell><article className="editorial"><p className="eyebrow">ABOUT</p><h1>사주로 보는<br/>전생의 인연</h1><p className="lead">친구와 나의 관계를 숫자 하나로 끝내지 않고, 한 편의 전생 이야기처럼 즐길 수 있도록 만든 소셜 사주 콘텐츠입니다.</p><section><h2>왜 만들었나요?</h2><p>궁합이나 성격 테스트는 결과만큼 “우리 진짜 이렇지 않아?”라고 이야기하는 과정이 재미있습니다. 이 서비스는 한 사람의 테스트에서 끝내지 않고 친구들이 하나의 페이지에 모여 관계 지도를 함께 완성하도록 설계했습니다.</p></section><section><h2>어떻게 해석하나요?</h2><p>생년월일을 바탕으로 두 사람 사이의 오행 상생·상극과 합·충·형·파·해·원진 같은 관계 요소를 조합합니다. 그 특징에 가까운 관계 유형을 고른 뒤 역할, 인연 지표와 전생 이야기로 보여줍니다.</p><p>출생시간은 선택 정보라 몰라도 이용할 수 있습니다.</p></section><section><h2>결과는 사실인가요?</h2><p>실제 전생을 확인하는 서비스가 아닙니다. 전통 명리 요소에서 아이디어를 얻은 엔터테인먼트 해석으로, 친구들과 대화를 시작하는 재미있는 소재로 이용해 주세요.</p></section><section><h2>친구가 참여하면</h2><p>페이지 주인을 중심으로 친구들이 인연지도에 쌓입니다. 인연의 깊이에 따라 거리가 달라지고 참여자가 늘어나면 가장 깊은 인연, 귀인, 라이벌 같은 추가 기록도 열립니다.</p></section><Link className="primary link" to="/create">내 인연지도 만들어보기</Link></article></Shell>}
+function About(){return <Shell><article className="editorial">
+<p className="eyebrow">ABOUT</p><h1>사주로 보는<br/>전생의 인연</h1>
+<p className="lead">생년월일을 바탕으로 두 사람의 사주 관계를 계산하고, 그 결과를 전생의 역할과 이야기로 재해석하는 소셜 엔터테인먼트 서비스입니다.</p>
+<section><h2>이 서비스가 하는 일</h2><p>한 사람의 운세를 단독으로 보는 서비스가 아니라 두 사람의 관계에 초점을 둡니다. 일간과 일지, 오행의 상생·상극, 천간합과 지지의 합·충·형·파·해·원진 등 여러 관계 요소를 함께 계산한 뒤 친밀감, 신뢰, 충돌, 성장 자극, 질긴 인연 같은 관계 지표로 바꿉니다. 그 지표를 기반으로 가장 가까운 전생 관계 유형과 역할을 선택합니다.</p></section>
+<section><h2>왜 ‘전생’이라는 이야기 형식을 사용하나요?</h2><p>사주 관계는 숫자만 보여주면 어렵고 딱딱하게 느껴질 수 있습니다. 그래서 계산된 관계 특징을 왕과 신하, 스승과 제자, 평생의 벗, 숙명의 라이벌처럼 이해하기 쉬운 이야기 구조로 옮겼습니다. 실제 전생을 증명하거나 미래를 예언하기 위한 것이 아니라, 서로의 관계를 이야기해보는 재미를 위한 장치입니다.</p></section>
+<section><h2>인연지도는 어떻게 구성되나요?</h2><p>페이지 주인을 중심으로 친구들이 하나씩 추가됩니다. 인연의 깊이 점수가 높은 사람일수록 지도 중심에 가깝게 배치되고, 각 사람에게는 페이지 주인 기준의 전생 역할이 표시됩니다. 참여자가 늘어나면 가장 깊은 인연, 귀인, 라이벌처럼 추가적인 관계 기록도 단계적으로 열립니다.</p></section>
+<section><h2>결과는 어떻게 계산되나요?</h2><p>닉네임과 생년월일, 양력·음력 여부를 바탕으로 사주 기둥을 계산하고, 두 사람 사이에서 합·충과 오행 관계가 어떻게 나타나는지 비교합니다. 출생시간은 선택 정보이며 모르는 경우에도 이용할 수 있습니다. 결과는 여러 관계 지표를 조합하여 결정되며 단일 요소 하나만으로 관계를 판정하지 않습니다.</p></section>
+<section><h2>결과를 어떻게 받아들여야 하나요?</h2><p>본 서비스는 전통 명리 요소에서 아이디어를 얻은 엔터테인먼트 콘텐츠입니다. 의료·법률·금융 판단이나 중요한 인간관계 결정을 대신하지 않습니다. 결과가 실제 관계를 규정한다고 보기보다, 서로의 차이와 공통점을 가볍게 이야기하는 소재로 이용해 주세요.</p></section>
+<section><h2>운영 및 문의</h2><p>서비스 기능, 개인정보, 오류 신고 및 기타 문의는 <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a>으로 보내주세요.</p></section>
+<Link className="primary link" to="/create">내 인연지도 만들어보기</Link>
+</article></Shell>}
 
 function Guide(){return <Shell><article className="editorial"><p className="eyebrow">RELATION GUIDE</p><h1>27가지<br/>전생 인연</h1><p className="lead">두 사람의 사주 관계 특징에 따라 만날 수 있는 전생 관계들을 소개합니다.</p><div className="guide-grid">{RELATION_GUIDE.map(([i,t,d])=><section className="guide-item" key={t}><span>{i}</span><div><h2>{t}</h2><p>{d}</p></div></section>)}</div><section className="guide-note"><h2>점수가 높으면 무조건 좋은 관계인가요?</h2><p>아닙니다. 인연의 깊이, 서로에게 주는 영향, 충돌, 질긴 인연은 서로 다른 관계 특징을 표현합니다. 높고 낮음 자체가 관계의 좋고 나쁨을 뜻하지 않습니다.</p></section></article></Shell>}
+
+function Methodology(){return <Shell><article className="editorial">
+<p className="eyebrow">METHODOLOGY</p><h1>인연 해석은<br/>어떻게 만들어질까요?</h1>
+<p className="lead">결과는 무작위로 정해지는 것이 아니라, 두 사람의 사주에서 관계를 설명할 수 있는 여러 요소를 계산해 조합합니다.</p>
+<section><h2>1. 일간과 오행</h2><p>사주에서 일간은 자신을 나타내는 중요한 기준으로 사용됩니다. 두 사람의 일간 오행이 서로 생하는지, 극하는지, 같은 오행인지 살펴 관계에서 도움과 자극, 경쟁성이 어떻게 나타날 수 있는지 계산합니다.</p></section>
+<section><h2>2. 일지의 합과 충</h2><p>일지는 관계 해석에서 중요한 축입니다. 육합이나 삼합 계열은 친밀감과 신뢰에 가중치를 주고, 충·형·파·해·원진 요소는 긴장과 충돌, 쉽게 끊기지 않는 관계에 가중치를 주는 방식으로 반영합니다.</p></section>
+<section><h2>3. 관계 지표로 환산</h2><p>계산된 요소는 인연의 깊이, 신뢰, 서로에게 주는 영향, 충돌, 질긴 인연 등의 지표로 정리됩니다. 한 가지 지표만으로 결과를 정하지 않고 여러 지표의 조합을 사용합니다.</p></section>
+<section><h2>4. 전생 관계 유형 선택</h2><p>각 관계 유형은 서로 다른 조건을 갖습니다. 신뢰와 상생이 강하면 전우나 보호 관계가 후보가 될 수 있고, 충돌과 경쟁성이 강하면 라이벌 계열이 후보가 될 수 있습니다. 여러 후보의 적합도를 비교해 가장 가까운 유형을 선택합니다.</p></section>
+<section><h2>5. 역할 방향 결정</h2><p>스승과 제자, 왕과 신하처럼 역할 방향이 있는 관계는 두 사람 사이에서 누가 더 도움을 주는 방향인지, 사주의 상생 흐름이 어느 쪽으로 향하는지 등을 함께 보고 역할을 결정합니다.</p></section>
+<section><h2>6. 전생 스토리로 재해석</h2><p>마지막으로 계산된 관계 유형과 관계 지표를 사용해 이해하기 쉬운 이야기로 표현합니다. 이 과정은 전통 명리를 과학적 사실로 주장하는 것이 아니라 관계 특징을 즐길 수 있도록 구성한 엔터테인먼트 해석입니다.</p></section>
+<div className="contact-card"><span>✉️</span><div><b>계산 방식 관련 문의</b><a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></div></div>
+</article></Shell>}
 
 function FAQ(){const q=[['출생시간을 몰라도 할 수 있나요?','네. 출생시간은 선택 입력이라 비워두고 진행할 수 있습니다.'],['친구가 제 생년월일을 볼 수 있나요?','아니요. 입력한 생년월일과 출생시간은 다른 이용자에게 공개하지 않습니다.'],['반대쪽 페이지에서도 같은 결과가 나오나요?','같은 두 사람은 방향이 바뀌어도 동일한 핵심 관계가 유지되도록 설계했습니다. 방향성이 있는 역할은 서로 대응됩니다.'],['실제 전생을 알려주는 건가요?','아닙니다. 전통 명리 관계 요소를 활용한 엔터테인먼트 콘텐츠입니다.'],['정보를 삭제할 수 있나요?','네. 하단의 참여정보 삭제 메뉴에서 해당 친구 페이지에 남긴 참여 기록을 삭제할 수 있습니다.'],['문의는 어디로 하나요?','서비스 및 개인정보 문의는 kikine901@gmail.com 으로 보내주세요.']];return <Shell><article className="editorial"><p className="eyebrow">FAQ</p><h1>자주 묻는 질문</h1><p className="lead">서비스 이용 전에 궁금할 만한 내용을 모았습니다.</p><div className="faq-list">{q.map(([a,b])=><details key={a}><summary>{a}</summary><p>{b}</p></details>)}</div><div className="contact-card"><span>✉️</span><div><b>더 궁금한 점이 있나요?</b><a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></div></div></article></Shell>}
 
@@ -601,5 +629,5 @@ class ErrorBoundary extends React.Component<{children:React.ReactNode},{error:bo
 }
 function NotFound(){return <Shell><div className="state-card card"><div className="state-icon">🧭</div><p className="eyebrow">404</p><h2>찾을 수 없는 페이지예요</h2><p>주소가 잘못되었거나 삭제된 인연지도일 수 있습니다.</p><Link className="primary link" to="/">처음으로 돌아가기</Link></div></Shell>}
 
-function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/saju/:id" element={<DetailedSaju/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="*" element={<NotFound/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
+function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/saju/:id" element={<DetailedSaju/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/methodology" element={<Methodology/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="*" element={<NotFound/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
 createRoot(document.getElementById('root')!).render(<BrowserRouter><ErrorBoundary><App/></ErrorBoundary></BrowserRouter>);

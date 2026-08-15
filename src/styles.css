@@ -1059,3 +1059,53 @@ footer{
 .roles .role-tag{
   color:#ffffff!important;
 }
+
+
+/* =========================================================
+   FIX: 개인 상세화면 전생 역할 배지 텍스트
+   의형 / 의제 / 신하 / 스승 등 pill 내부 글씨를 흰색으로 고정
+   ========================================================= */
+.role-badge,
+.role-tag,
+.role-pill,
+.role-card .role-badge,
+.role-card .role-tag,
+.role-card .role-pill,
+.role-box .role-badge,
+.role-box .role-tag,
+.role-box .role-pill,
+.person-role .role-badge,
+.person-role .role-tag,
+.person-role .role-pill,
+.role-side .role-badge,
+.role-side .role-tag,
+.role-side .role-pill,
+.role-pair .role-badge,
+.role-pair .role-tag,
+.role-pair .role-pill,
+.roles .role-badge,
+.roles .role-tag,
+.roles .role-pill,
+.role-card em,
+.role-box em,
+.person-role em,
+.role-side em,
+.role-pair em,
+.roles em {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 배지 안쪽에 별도 span/b/strong 태그가 있는 경우까지 흰색으로 고정 */
+.role-badge *,
+.role-tag *,
+.role-pill *,
+.role-card em *,
+.role-box em *,
+.person-role em *,
+.role-side em *,
+.role-pair em *,
+.roles em * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
