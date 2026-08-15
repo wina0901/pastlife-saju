@@ -1,0 +1,2 @@
+import {supa,json,Env} from '../../_shared/db';
+export const onRequestGet:PagesFunction<Env>=async({request,env})=>{try{const u=new URL(request.url), slug=u.searchParams.get('slug'); const pages=await supa(env,`pages_public?slug=eq.${encodeURIComponent(slug||'')}&select=*`,{method:'GET'}); if(!pages.length)return json({page:null,relationships:[]},404); const p=pages[0]; const rs=await supa(env,`page_relationships_public?page_id=eq.${p.id}&order=created_at.desc&select=*`,{method:'GET'}); return json({page:p,relationships:rs})}catch(e:any){return json({error:e.message},500)}}
