@@ -4,10 +4,11 @@ import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from 'reac
 import './styles.css';
 
 const API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-api';
+const DELETE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-delete';
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
-const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header><Link to="/" className="brand">사주로 보는 전생의 인연</Link></header>{children}<footer>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</footer></main>;
+const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header><Link to="/" className="brand">사주로 보는 전생의 인연</Link></header>{children}<footer><nav className="footer-links"><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
 
 const relationIcon=(code?:string,label?:string)=>{
  const byCode:Record<string,string>={KING_LOYALIST:'👑',KING_ADVISOR:'📜',COMRADES:'⚔️',TEACHER_STUDENT:'📖',RIVALS:'🔥',OLD_FRIENDS:'🤝',UNFINISHED_LOVERS:'💘',BENEFACTOR:'💎',MERCHANT_RIVALS:'💰',TROUBLE_FIXER:'💥',GUARD_ROYAL:'🛡️',FOES_TO_FRIENDS:'🪢',SIBLINGS:'🏠',WANDERERS:'🧭',HEALER_PATIENT:'🌿',PATRON_ARTIST:'🎨',FORBIDDEN_LOVE:'🌙',ONE_SIDED_LOVE:'💌',NEIGHBOR_RIVALS:'🏘️',CAPTAIN_NAVIGATOR:'⛵'};
@@ -34,6 +35,37 @@ function buildHighlights(items:any[]){
  ];
 }
 
+
+function AdSlot({placement='content'}:{placement?:string}){
+ return <aside className={`ad-slot ad-${placement}`} aria-label="광고 영역">
+   <div className="ad-label">ADVERTISEMENT</div>
+   <div className="ad-placeholder">
+     <span>AD</span>
+     <div><b>배너 광고 영역</b><small>광고 승인 후 실제 광고가 표시됩니다.</small></div>
+   </div>
+ </aside>
+}
+
+function AdGate(){
+ const {id}=useParams();const nav=useNavigate();const [stage,setStage]=React.useState<'analyzing'|'ad'>('analyzing');const [left,setLeft]=React.useState(5);
+ React.useEffect(()=>{const t=setTimeout(()=>setStage('ad'),1300);return()=>clearTimeout(t)},[]);
+ React.useEffect(()=>{if(stage!=='ad')return;const t=setInterval(()=>setLeft(v=>{if(v<=1){clearInterval(t);return 0}return v-1}),1000);return()=>clearInterval(t)},[stage]);
+ const go=()=>{if(left===0)nav(`/result/${id}`,{replace:true})};
+ return <Shell><section className="ad-gate-page">
+   {stage==='analyzing'?<div className="analysis-screen">
+     <div className="analysis-orb"><span>☯</span><i/><i/><i/></div>
+     <p className="eyebrow">사주 분석 중</p><h1>두 사람의 전생 기록을<br/>찾고 있어요</h1>
+     <div className="analysis-steps"><span>✓ 사주팔자 확인</span><span>✓ 오행 관계 분석</span><span className="working">● 전생 인연 연결 중</span></div>
+   </div>:<div className="reward-ad card">
+     <div className="reward-head"><span>🎁</span><div><p className="eyebrow">RESULT UNLOCK</p><h2>광고를 보고<br/>전생 결과를 확인하세요</h2></div></div>
+     <div className="reward-ad-box"><div className="ad-label">ADVERTISEMENT</div><span className="big-ad">AD</span><b>결과 공개 전 광고 영역</b><p>실제 광고 연동 전 테스트 화면입니다.</p></div>
+     <div className="reward-progress"><span style={{width:`${((5-left)/5)*100}%`}}/></div>
+     <p className="reward-time">{left>0?`${left}초 후 결과를 확인할 수 있어요`:'광고 시청이 완료되었습니다.'}</p>
+     <button disabled={left>0} onClick={go} className="primary">{left>0?'광고 시청 중...':'전생 결과 확인하기'}</button>
+   </div>}
+ </section></Shell>
+}
+
 function PersonForm({buttonText,onSubmit}:{buttonText:string,onSubmit:(v:PersonInput)=>Promise<void>|void}){
  const [nickname,setNickname]=useState(''); const [birthDate,setBirthDate]=useState(''); const [birthTime,setBirthTime]=useState(''); const [calendarType,setCalendarType]=useState<'solar'|'lunar'>('solar'); const [busy,setBusy]=useState(false);
  return <form onSubmit={async e=>{e.preventDefault();setBusy(true);try{await onSubmit({nickname,birthDate,birthTime,calendarType})}finally{setBusy(false)}}} className="card form">
@@ -41,15 +73,15 @@ function PersonForm({buttonText,onSubmit}:{buttonText:string,onSubmit:(v:PersonI
    <label>생년월일<input required type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label>
    <div className="seg"><button type="button" className={calendarType==='solar'?'on':''} onClick={()=>setCalendarType('solar')}>양력</button><button type="button" className={calendarType==='lunar'?'on':''} onClick={()=>setCalendarType('lunar')}>음력</button></div>
    <label>태어난 시간 <span>선택 · 모르면 비워두세요</span><input type="time" value={birthTime} onChange={e=>setBirthTime(e.target.value)}/></label>
-   <p className="privacy-note">🔒 입력한 생년월일과 출생시간은 친구에게 공개되지 않습니다.</p>
-   <label className="consent"><input required type="checkbox"/> 개인정보 수집·이용에 동의합니다.</label>
+   <div className="privacy-note"><b>🔒 개인정보 수집·이용 안내</b><span>목적: 전생 관계 계산 및 인연지도 저장</span><span>항목: 닉네임, 생년월일, 양·음력 구분, 선택 입력한 출생시간</span><span>보유: 서비스 이용·인연지도 제공 기간 또는 삭제 요청 시까지</span><span>동의를 거부할 수 있으나, 거부 시 관계 분석 기능을 이용할 수 없습니다.</span></div>
+   <label className="consent"><input required type="checkbox"/> 위 개인정보 수집·이용에 동의합니다. <Link to="/privacy">자세히 보기</Link></label>
    <button disabled={busy} className="primary">{busy?'인연을 살펴보고 있어요...':buttonText}</button>
  </form>
 }
 
 function Home(){return <Shell><section className="hero"><div className="orb">☯</div><p className="eyebrow">전생 인연지도</p><h1>우리, 전생에는<br/>무슨 사이였을까?</h1><p>내 사주로 페이지를 만들고 친구들을 초대해보세요.<br/>친구들이 참여할수록 전생 인연지도가 완성됩니다.</p><Link className="primary link" to="/create">내 전생 인연지도 만들기</Link></section></Shell>}
 
-function Create(){const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok) return alert(d.error||'생성에 실패했습니다.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);nav(`/n/${d.slug}`)};return <Shell><section><p className="eyebrow">STEP 1</p><h1>먼저 당신을 알려주세요</h1><p className="muted">한 번 만들면 친구에게 공유할 수 있는 나만의 주소가 생깁니다.</p><PersonForm buttonText="내 사주로 지도 만들기" onSubmit={submit}/></section></Shell>}
+function Create(){const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok) return alert(d.error||'생성에 실패했습니다.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);nav(`/n/${d.slug}`)};return <Shell><section><p className="eyebrow">STEP 1</p><h1>먼저 당신을 알려주세요</h1><p className="muted">한 번 만들면 친구에게 공유할 수 있는 나만의 주소가 생깁니다.</p><PersonForm buttonText="내 사주로 지도 만들기" onSubmit={submit}/><AdSlot placement="create"/></section></Shell>}
 
 function HighlightGrid({items,count}:{items:any[];count:number}){const hs=buildHighlights(items);return <div className="highlight-wrap"><div className="highlight-head"><p className="eyebrow">인연 분석</p><h2>친구들이 채워주는<br/>나의 전생 기록</h2></div><div className="highlight-grid">{hs.map(h=>{const unlocked=count>=h.need&&h.item;const left=Math.max(0,h.need-count);return <div className={`highlight-card ${unlocked?'unlocked':'locked-highlight'}`} key={h.title}>{unlocked?<><span className="highlight-icon">{h.icon}</span><small>{h.title}</small><b>{h.item.nickname}</b><em>{h.item.relationship_type}</em><strong>{h.score}</strong></>:<><span className="highlight-icon">🔒</span><small>{h.title}</small><b>{left}명 더 필요</b><em>{count} / {h.need}</em><div className="mini-progress"><span style={{width:`${Math.min(100,(count/h.need)*100)}%`}}/></div></>}</div>})}</div></div>}
 
@@ -84,9 +116,9 @@ function RadialMap({owner,items}:{owner:string;items:any[]}){
 function Page(){const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);
  const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}`);const d=await r.json();setData(r.ok?d:null)}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);
  if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
- const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');location.href=`/result/${d.relationship_id}`};
+ const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');location.href=`/ad/${d.relationship_id}`};
  const share=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
- return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">발견된 인연 <strong>{data.count}명</strong></div>
+ return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">발견된 인연 <strong>{data.count}명</strong></div><AdSlot placement="map"/>
  {ownerMode?<><>{data.relationships.length===0?<div className="map card"><p>아직 발견된 인연이 없습니다.<br/>친구에게 이 페이지 주소를 공유해보세요.</p></div>:<><RadialMap owner={data.owner_nickname} items={data.relationships}/><div className="relation-list card"><div className="section-title"><span>🗂️</span><div><small>발견된 인연</small><h3>전체 인연 보기</h3></div></div>{data.relationships.map((x:any)=><Link className="relation-row" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><div><b>{x.nickname}</b><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></Link>)}</div><HighlightGrid items={data.relationships} count={data.count}/></>}</><button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 잠긴 전생 기록이 열립니다.</p></>:<><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">내 정보만 입력하면 두 사람의 사주 관계를 전생 이야기로 풀어드립니다.</p><PersonForm buttonText="우리의 전생 찾기" onSubmit={submit}/></>}
  </section></Shell>}
 
@@ -151,10 +183,52 @@ function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null
  return <Shell><section className="result"><div className="result-hero"><p className="eyebrow">사주로 보는 전생의 인연</p><div className="result-icon">{icon}</div><p className="era">{r.era}</p><h1>{r.label}</h1><p className="pair">{r.ownerNickname} <span>×</span> {r.participantNickname}</p><p className="result-quote">“{r.oneLiner}”</p></div>
  <div className="card roles"><div><small>전생의 역할</small><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><small>전생의 역할</small><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div>
  <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
- <ScoreBars scores={r.scores||{}}/>
+ <ScoreBars scores={r.scores||{}}/><AdSlot placement="result"/>
  {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}
  <div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 이미지</b><p>9:16 비율의 결과 카드를 만들어 공유할 수 있어요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div>
  <button className="primary share-btn" onClick={share}>링크로 결과 공유하기</button>{r.pageSlug&&<Link className="secondary link" to={`/n/${r.pageSlug}`}>전생 인연지도 돌아가기</Link>}<Link className="ghost-link" to="/create">나도 내 전생 인연지도 만들기 →</Link></section></Shell>}
 
-function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/result/:id" element={<Result/>}/></Routes>}
+
+function LegalLayout({title,updated,children}:{title:string;updated:string;children:React.ReactNode}){return <Shell><article className="legal"><p className="eyebrow">SERVICE POLICY</p><h1>{title}</h1><p className="legal-updated">최종 수정: {updated}</p>{children}<div className="draft-notice"><b>MVP 운영 안내</b><p>정식 공개 전 서비스 운영자명·연락처·사업자 정보(해당 시)를 최종 확정하여 이 문서에 추가해야 합니다.</p></div></article></Shell>}
+
+function Privacy(){return <LegalLayout title="개인정보처리방침" updated="2026.08.15">
+ <section><h2>1. 처리하는 개인정보와 이용 목적</h2><p>서비스는 전생 관계 분석과 인연지도 제공을 위해 닉네임, 생년월일, 양력·음력 구분, 이용자가 선택적으로 입력한 출생시간을 처리합니다. 입력한 생년월일과 출생시간은 다른 이용자에게 공개하지 않습니다.</p></section>
+ <section><h2>2. 개인정보의 보유 및 이용기간</h2><p>개인정보는 인연지도와 관계 결과를 계속 제공하기 위해 서비스 이용 기간 동안 보관될 수 있으며, 정보주체가 삭제를 요청하거나 서비스 제공 목적이 소멸하면 관련 법령상 보관 의무가 있는 경우를 제외하고 파기합니다.</p></section>
+ <section><h2>3. 개인정보의 제3자 제공</h2><p>현재 서비스는 이용자의 개인정보를 다른 이용자나 광고주 등 제3자에게 판매하거나 제공하지 않습니다. 향후 제3자 제공이 필요한 기능을 도입하는 경우 관련 법령에 따라 별도 안내 및 필요한 동의 절차를 마련합니다.</p></section>
+ <section><h2>4. 처리업무의 외부 서비스 이용</h2><p>서비스 운영을 위해 Cloudflare(웹 호스팅·전송)와 Supabase(데이터베이스·서버 기능)를 사용합니다. 실제 정식 운영 전 각 서비스의 데이터 처리 위치와 계약·보호조치 등을 확인하여 필요한 국외 이전 또는 위탁 관련 고지를 보완해야 합니다.</p></section>
+ <section><h2>5. 정보주체의 권리</h2><p>이용자는 자신의 개인정보에 대한 열람, 정정, 삭제, 처리정지 등을 요청할 수 있습니다. 특정 친구 페이지에 남긴 참여 기록은 <Link to="/delete">참여정보 삭제</Link> 화면에서 본인 확인 후 직접 삭제할 수 있으며, 추가 문의는 <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a>으로 접수할 수 있습니다.</p></section>
+ <section><h2>6. 개인정보의 파기</h2><p>삭제 요청 등으로 보유 목적이 없어지면 해당 참여 연결 기록을 삭제합니다. 관계 기록이 더 이상 어떤 페이지에서도 사용되지 않는 경우 관련 관계 결과도 함께 정리하도록 설계되어 있습니다.</p></section>
+ <section><h2>7. 안전성 확보조치</h2><p>브라우저가 개인정보 테이블에 직접 접근하지 않도록 서버 API를 통해 처리하고, 데이터베이스 접근 권한을 제한합니다. 삭제용 비밀값은 원문 대신 해시값 형태로 서버에 저장합니다.</p></section>
+ <section><h2>8. 아동의 개인정보</h2><p>정식 출시 전에 서비스의 이용 연령 정책을 확정해야 합니다. 만 14세 미만 이용자의 개인정보를 처리하게 되는 경우 법정대리인 동의 등 필요한 별도 절차를 마련합니다.</p></section>
+ <section><h2>9. 개인정보 관련 문의</h2><p>개인정보 관련 문의 및 삭제 요청: <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></p></section><section><h2>10. 처리방침 변경</h2><p>개인정보 처리 방식이 변경되는 경우 이 페이지의 내용을 갱신하고 중요한 변경사항은 서비스 내에서 알립니다.</p></section>
+ </LegalLayout>}
+
+function Terms(){return <LegalLayout title="이용약관" updated="2026.08.15">
+ <section><h2>1. 서비스의 성격</h2><p>‘사주로 보는 전생의 인연’은 전통 명리 요소를 바탕으로 관계 성향을 계산하여 전생 이야기 형식으로 재해석하는 엔터테인먼트 서비스입니다.</p></section>
+ <section><h2>2. 결과에 대한 안내</h2><p>서비스 결과는 재미와 소셜 콘텐츠를 위한 해석이며 실제 전생, 운명, 인간관계의 사실 여부나 미래를 과학적으로 증명하거나 보장하지 않습니다. 중요한 의료·법률·금융·인간관계 의사결정의 근거로 사용해서는 안 됩니다.</p></section>
+ <section><h2>3. 이용자의 책임</h2><p>이용자는 본인이 입력할 권한이 있는 정보를 사용해야 하며 타인의 개인정보를 동의 없이 수집하거나 악의적으로 입력해서는 안 됩니다. 모욕, 괴롭힘, 사칭 등 타인의 권리를 침해하는 방식으로 서비스를 이용해서는 안 됩니다.</p></section>
+ <section><h2>4. 서비스 변경 및 중단</h2><p>MVP 기간에는 기능, 관계 계산식, 화면, 데이터 구조가 개선될 수 있으며 안정성 확보나 운영상 필요에 따라 일부 기능이 변경 또는 일시 중단될 수 있습니다.</p></section>
+ <section><h2>5. 지식재산권</h2><p>서비스가 제공하는 UI, 문구, 관계 유형 및 자체 제작 콘텐츠에 관한 권리는 법령 또는 별도 약정에 따라 보호됩니다. 이용자가 생성한 공유 이미지는 개인적인 공유 목적으로 사용할 수 있습니다.</p></section>
+ <section><h2>6. 면책</h2><p>서비스는 엔터테인먼트 결과의 정확성이나 특정 관계 개선 효과를 보장하지 않습니다. 이용자의 입력 오류, 네트워크 장애, 외부 플랫폼 장애 등 서비스가 합리적으로 통제하기 어려운 사유로 발생한 문제에 대해서는 관련 법령이 허용하는 범위에서 책임이 제한될 수 있습니다.</p></section>
+ </LegalLayout>}
+
+function DeleteData(){
+ const [relationship,setRelationship]=React.useState('');const [nickname,setNickname]=React.useState('');const [birthDate,setBirthDate]=React.useState('');const [birthTime,setBirthTime]=React.useState('');const [calendarType,setCalendarType]=React.useState<'solar'|'lunar'>('solar');const [busy,setBusy]=React.useState(false);const [done,setDone]=React.useState(false);
+ const extractId=(v:string)=>{const t=v.trim();const m=t.match(/\/result\/([0-9a-f-]{20,})/i);return m?.[1]||t};
+ const submit=async(e:React.FormEvent)=>{e.preventDefault();if(!confirm('이 페이지에 남긴 참여 기록을 삭제할까요? 삭제 후에는 되돌릴 수 없습니다.'))return;setBusy(true);try{const id=extractId(relationship);const rr=await fetch(`${API}/relationships/${encodeURIComponent(id)}`);const rd=await rr.json();if(!rr.ok||!rd?.relationship?.pageSlug)throw new Error('결과 기록을 찾을 수 없습니다.');const slug=rd.relationship.pageSlug;
+   const issue=await fetch(`${DELETE_API}/issue`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({relationship_id:id,page_slug:slug,nickname,birth_date:birthDate,birth_time:birthTime||null,calendar_type:calendarType})});const issued=await issue.json();if(!issue.ok)throw new Error(issued.error||'본인 확인에 실패했습니다.');
+   const del=await fetch(`${DELETE_API}/delete`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({relationship_id:id,page_slug:slug,delete_token:issued.delete_token})});const dd=await del.json();if(!del.ok)throw new Error(dd.error||'삭제에 실패했습니다.');setDone(true);
+ }catch(err:any){alert(err?.message||'삭제 중 오류가 발생했습니다.')}finally{setBusy(false)}};
+ if(done)return <Shell><section className="delete-page"><div className="card delete-success"><span>✓</span><h1>삭제되었습니다</h1><p>해당 친구 페이지에 남아 있던 참여 연결 기록을 삭제했습니다.</p><Link className="primary link" to="/">홈으로 돌아가기</Link></div></section></Shell>;
+ return <Shell><section className="delete-page"><p className="eyebrow">PRIVACY CONTROL</p><h1>참여정보 삭제</h1><p className="muted">친구의 전생 인연지도에 참여하면서 남긴 기록을 직접 삭제할 수 있습니다.</p><form className="card delete-form" onSubmit={submit}>
+   <label>결과 링크 또는 결과 ID<input required value={relationship} onChange={e=>setRelationship(e.target.value)} placeholder="https://.../result/xxxx 또는 UUID"/></label>
+   <label>참여할 때 입력한 닉네임<input required value={nickname} onChange={e=>setNickname(e.target.value)}/></label>
+   <label>생년월일<input required type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label>
+   <div className="seg"><button type="button" className={calendarType==='solar'?'on':''} onClick={()=>setCalendarType('solar')}>양력</button><button type="button" className={calendarType==='lunar'?'on':''} onClick={()=>setCalendarType('lunar')}>음력</button></div>
+   <label>출생시간 <span>당시 입력하지 않았다면 비워두세요</span><input type="time" value={birthTime} onChange={e=>setBirthTime(e.target.value)}/></label>
+   <div className="danger-note"><b>삭제 범위</b><p>현재 셀프 삭제는 ‘해당 친구 페이지에 참여한 기록’을 대상으로 합니다. 여러 페이지에 참여했다면 각 결과별로 삭제해야 합니다.</p></div>
+   <button disabled={busy} className="danger-button">{busy?'본인 확인 및 삭제 중...':'내 참여 기록 삭제하기'}</button>
+ </form></section></Shell>}
+
+function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
 createRoot(document.getElementById('root')!).render(<BrowserRouter><App/></BrowserRouter>);
