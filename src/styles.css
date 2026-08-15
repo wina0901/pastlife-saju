@@ -28,3 +28,21 @@
 .visitor-map-top>.radial-card,
 .visitor-map-top>.empty-public-map{margin-top:12px}
 .below-map{margin-top:34px;padding-top:28px;border-top:1px solid #382b43}
+
+.ranking-card{margin-top:14px;text-align:left}
+.ranking-copy{margin:-5px 0 14px;color:#8f8397;font-size:11px}
+.ranking-list{display:grid}
+.ranking-row{display:grid;grid-template-columns:36px 1fr auto;gap:11px;align-items:center;padding:13px 2px;border-bottom:1px solid #32283b;color:inherit;text-decoration:none}
+.ranking-row:last-child{border-bottom:0}
+.rank-badge{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:#251b2e;color:#aa9bb4;font-size:11px;font-weight:900;border:1px solid #3b2c47}
+.rank-1{background:#4c3820;border-color:#8e6a31;color:#f2cf79}
+.rank-2{background:#303038;border-color:#60616c;color:#d9dae3}
+.rank-3{background:#462c25;border-color:#815342;color:#dfa88d}
+.rank-person{display:flex;min-width:0;flex-direction:column}
+.rank-person b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-person span{margin-top:4px;color:#a997b7;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ranking-row>strong{font-size:16px;color:#dfc0f3}
+.mine-rank{margin:4px -8px;padding-left:10px;padding-right:10px;border-radius:13px;background:#2b1b38;border:1px solid #765398}
+.mine-rank .rank-person b:after{content:" · MY";font-size:8px;color:#d5afea}
+.visitor-ranking-row{cursor:default}
+.ranking-private-note{text-align:center;margin:13px 0 0;color:#756a7c;font-size:10px}
