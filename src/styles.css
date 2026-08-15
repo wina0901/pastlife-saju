@@ -1165,3 +1165,292 @@ footer{
   color: #8a6546 !important;
   -webkit-text-fill-color: #8a6546 !important;
 }
+
+
+/* =========================================================
+   GLOBAL LIGHT THEME CLEANUP
+   남아 있는 검정/짙은 보라 배경을 전체적으로 밝은 톤으로 통일
+   ========================================================= */
+
+:root{
+  --light-bg:#f7f3ec;
+  --light-surface:#fffdf9;
+  --light-surface-2:#f8f1e8;
+  --light-surface-3:#efe4d7;
+  --light-border:#dfcdb9;
+  --light-border-soft:#eadfd2;
+  --light-text:#3b3026;
+  --light-text-2:#6f5d4d;
+  --light-muted:#9a8776;
+  --light-accent:#9a714d;
+  --light-accent-2:#b88f68;
+}
+
+/* 페이지 전반 */
+html,body,#root,.shell{
+  background:var(--light-bg)!important;
+  color:var(--light-text)!important;
+}
+
+/* 일반적인 모든 카드/패널 */
+.card,
+.editorial section,
+.guide-item,
+.guide-note,
+.faq-list details,
+.contact-card,
+.privacy-note,
+.danger-note,
+.reward-ad,
+.reward-ad-box,
+.analysis-screen,
+.ad-gate-page,
+.ad-placeholder,
+.ad-slot,
+.relation-list,
+.relation-row,
+.scores,
+.story,
+.roles,
+.basis,
+.share-card-box,
+.deep-unlock-card,
+.deep-summary,
+.element-detail,
+.pillar-card,
+.deep-factors,
+.vector-card,
+.candidate-card,
+.deep-advice,
+.deep-pastlife-story,
+.next-unlock-banner,
+.all-unlocked-banner,
+.unlock-card,
+.unlock-total,
+.join-reveal-hero,
+.mine-relation-preview,
+.ranking-card,
+.clean-rank-row,
+.state-card,
+.delete-success,
+.delete-form{
+  background:var(--light-surface)!important;
+  color:var(--light-text)!important;
+  border-color:var(--light-border)!important;
+  box-shadow:0 8px 24px rgba(92,69,46,.07)!important;
+}
+
+/* 리스트형 관계 카드/가이드 카드 */
+.relation-row,
+.guide-item,
+.clean-rank-row,
+.candidate-list>div{
+  background:linear-gradient(180deg,#fffdf9,#faf4ec)!important;
+}
+
+/* 아주 어두운 배경이 남기 쉬운 역할/관계/가이드 카드 */
+.role-card,
+.role-box,
+.person-role,
+.role-side,
+.role-panel,
+.role-pair>div,
+.roles>div,
+.guide-grid>section,
+.highlight-card,
+.ranking-row,
+.podium-card,
+.top-card,
+.relation-card,
+.result-card{
+  background:linear-gradient(180deg,#fffdf9 0%,#f7eee3 100%)!important;
+  color:var(--light-text)!important;
+  border:1px solid var(--light-border)!important;
+  box-shadow:0 7px 20px rgba(90,67,44,.07)!important;
+}
+
+/* 제목/이름 */
+.card h1,.card h2,.card h3,
+.editorial h1,.editorial h2,.editorial h3,
+.guide-item h2,.guide-item h3,
+.relation-row b,
+.clean-rank-name b,
+.role-card b,.role-box b,.roles b,
+.deep-saju-page h1,.deep-saju-page h2,.deep-saju-page h3{
+  color:var(--light-text)!important;
+  -webkit-text-fill-color:var(--light-text)!important;
+}
+
+/* 일반 본문/설명 */
+.card p,
+.card span,
+.card small,
+.card em,
+.guide-item p,
+.guide-item span,
+.relation-row span,
+.ranking-copy,
+.basis-copy,
+.basis-notice,
+.deep-explain,
+.deep-story-body p,
+.deep-story-present p,
+.deep-advice p,
+.faq-list p,
+.editorial p{
+  color:var(--light-text-2)!important;
+  -webkit-text-fill-color:var(--light-text-2)!important;
+}
+
+/* 소제목/eyebrow */
+.eyebrow,
+.section-title small,
+.guide-item small,
+.ranking-card small,
+.deep-saju-page small{
+  color:var(--light-accent)!important;
+  -webkit-text-fill-color:var(--light-accent)!important;
+}
+
+/* 아이콘 박스도 밝게 */
+.section-title>span,
+.deep-symbol,
+.mine-preview-icon,
+.become-owner-card>span,
+.contact-card>span{
+  background:var(--light-surface-2)!important;
+  color:var(--light-accent)!important;
+  border:1px solid var(--light-border-soft)!important;
+}
+
+/* 기존 검정/보라 pill, badge 계열 */
+.badge,
+.tag,
+.pill,
+.factor-list span,
+.deep-factor-list span,
+.unlock-need,
+.rank-badge,
+.clean-rank-number,
+.candidate-list>div>span{
+  background:var(--light-surface-3)!important;
+  color:#7a5c42!important;
+  -webkit-text-fill-color:#7a5c42!important;
+  border-color:#dcc4aa!important;
+  box-shadow:none!important;
+}
+
+/* 버튼 제외: primary는 기존 브라운 유지 */
+.secondary,
+.story-share,
+.danger-button{
+  background:#fff!important;
+  color:#76583d!important;
+  -webkit-text-fill-color:#76583d!important;
+  border-color:#d7c0a7!important;
+}
+
+/* 다크 배경용으로 지정된 텍스트 색 강제 복구 */
+.roles strong,
+.roles span,
+.roles small,
+.role-card strong,
+.role-card span,
+.role-card small,
+.role-box strong,
+.role-box span,
+.role-box small,
+.guide-item strong,
+.guide-item b,
+.guide-item span,
+.guide-item small{
+  color:var(--light-text-2)!important;
+  -webkit-text-fill-color:var(--light-text-2)!important;
+}
+
+/* 현재 화면의 27개 관계 유형 카드 */
+.guide-grid{
+  gap:12px!important;
+}
+
+.guide-grid .guide-item{
+  background:#fffdf9!important;
+  border:1px solid #e1d0bd!important;
+}
+
+.guide-grid .guide-item>span{
+  background:#f2e6d8!important;
+  color:#8d6746!important;
+}
+
+.guide-grid .guide-item h2{
+  color:#4a392b!important;
+}
+
+.guide-grid .guide-item p{
+  color:#7c6958!important;
+}
+
+/* 해금 카드 */
+.unlock-card.is-locked,
+.unlock-card.is-unlocked{
+  background:linear-gradient(180deg,#fffdf9,#f7efe5)!important;
+}
+
+.unlocked-stamp{
+  background:#b48a64!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+
+/* 분석/광고 화면이 검게 남지 않도록 */
+.analysis-screen,
+.reward-ad,
+.reward-ad-box{
+  background:linear-gradient(180deg,#fffdf9,#f5eadc)!important;
+  color:var(--light-text)!important;
+}
+
+.reward-ad-box .big-ad{
+  color:#9b7553!important;
+}
+
+/* 표/트랙 */
+.score-track,
+.vector-detail-track,
+.unlock-progress,
+.reward-progress{
+  background:#eadfd3!important;
+}
+
+/* footer/nav */
+footer{
+  color:var(--light-muted)!important;
+  border-color:var(--light-border-soft)!important;
+}
+
+/* 링크 */
+a{
+  color:#7d5b3e;
+}
+
+/* 혹시 인라인 다크 컬러가 남아 있는 텍스트 대비 보정 */
+[style*="background:#1"],
+[style*="background: #1"],
+[style*="background:#0"],
+[style*="background: #0"],
+[style*="background:#2"],
+[style*="background: #2"]{
+  color:var(--light-text)!important;
+}
+
+/* 모바일 */
+@media(max-width:560px){
+  .guide-grid .guide-item,
+  .clean-rank-row,
+  .role-card,
+  .role-box,
+  .roles>div{
+    box-shadow:0 4px 14px rgba(91,68,45,.06)!important;
+  }
+}
