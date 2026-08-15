@@ -7,7 +7,16 @@ const API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-api';
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
-const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header><Link to="/" className="brand">사주로 보는 전생의 인연</Link></header>{children}<footer>오락·콘텐츠용 사주 해석 서비스 · 입력한 생년월일은 다른 이용자에게 공개되지 않습니다.</footer></main>;
+const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header><Link to="/" className="brand">사주로 보는 전생의 인연</Link></header>{children}<footer>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</footer></main>;
+
+const relationIcon=(code?:string,label?:string)=>{
+ const byCode:Record<string,string>={KING_LOYALIST:'👑',KING_ADVISOR:'📜',COMRADES:'⚔️',TEACHER_STUDENT:'📖',RIVALS:'🔥',OLD_FRIENDS:'🤝',UNFINISHED_LOVERS:'💘',BENEFACTOR:'💎',MERCHANT_RIVALS:'💰',TROUBLE_FIXER:'💥',GUARD_ROYAL:'🛡️',FOES_TO_FRIENDS:'🪢',SIBLINGS:'🏠',WANDERERS:'🧭',HEALER_PATIENT:'🌿',PATRON_ARTIST:'🎨',FORBIDDEN_LOVE:'🌙',ONE_SIDED_LOVE:'💌',NEIGHBOR_RIVALS:'🏘️',CAPTAIN_NAVIGATOR:'⛵'};
+ if(code&&byCode[code])return byCode[code];
+ if(label?.includes('연인')||label?.includes('사랑'))return '💘';
+ if(label?.includes('라이벌')||label?.includes('원수'))return '🔥';
+ if(label?.includes('전우'))return '⚔️';
+ return '🔮';
+};
 
 function PersonForm({buttonText,onSubmit}:{buttonText:string,onSubmit:(v:PersonInput)=>Promise<void>|void}){
  const [nickname,setNickname]=useState(''); const [birthDate,setBirthDate]=useState(''); const [birthTime,setBirthTime]=useState(''); const [calendarType,setCalendarType]=useState<'solar'|'lunar'>('solar'); const [busy,setBusy]=useState(false);
@@ -18,7 +27,7 @@ function PersonForm({buttonText,onSubmit}:{buttonText:string,onSubmit:(v:PersonI
    <label>태어난 시간 <span>선택 · 모르면 비워두세요</span><input type="time" value={birthTime} onChange={e=>setBirthTime(e.target.value)}/></label>
    <p className="privacy-note">🔒 입력한 생년월일과 출생시간은 친구에게 공개되지 않습니다.</p>
    <label className="consent"><input required type="checkbox"/> 개인정보 수집·이용에 동의합니다.</label>
-   <button disabled={busy} className="primary">{busy?'확인하고 있어요...':buttonText}</button>
+   <button disabled={busy} className="primary">{busy?'인연을 살펴보고 있어요...':buttonText}</button>
  </form>
 }
 
@@ -28,14 +37,24 @@ function Create(){const nav=useNavigate();const submit=async(v:PersonInput)=>{co
 
 function Page(){const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);
  const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}`);const d=await r.json();setData(r.ok?d:null)}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);
- if(loading)return <Shell><div className="card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
+ if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
  const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');location.href=`/result/${d.relationship_id}`};
  const share=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
  return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">발견된 인연 <strong>{data.count}명</strong></div>
- {ownerMode?<><div className="map card">{data.relationships.length===0?<p>아직 발견된 인연이 없습니다.<br/>친구에게 이 페이지 주소를 공유해보세요.</p>:data.relationships.map((x:any)=><Link className="relation" to={`/result/${x.id}`} key={x.id}><b>{x.nickname}</b><span>{x.relationship_type}</span></Link>)}</div><button className="primary" onClick={share}>친구에게 공유하기</button><div className="locked card"><b>🔒 친구가 더 참여하면</b><p>가장 깊은 인연 · 귀인 · 숙명의 라이벌 같은 추가 분석을 열 수 있어요.</p></div></>:<><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">내 정보만 입력하면 두 사람의 전생 관계를 찾아드립니다.</p><PersonForm buttonText="우리의 전생 찾기" onSubmit={submit}/></>}
+ {ownerMode?<><div className="map card">{data.relationships.length===0?<p>아직 발견된 인연이 없습니다.<br/>친구에게 이 페이지 주소를 공유해보세요.</p>:<><div className="map-owner"><span>☯</span><b>{data.owner_nickname}</b></div><div className="relation-grid">{data.relationships.map((x:any)=><Link className="relation-chip" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><b>{x.nickname}</b><span>{x.relationship_type}</span></Link>)}</div></>}</div><button className="primary" onClick={share}>친구에게 공유하기</button><div className="locked card"><b>🔒 친구가 더 참여하면</b><p>가장 깊은 인연 · 귀인 · 숙명의 라이벌 같은 추가 분석을 열 수 있어요.</p></div></>:<><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">내 정보만 입력하면 두 사람의 사주 관계를 전생 이야기로 풀어드립니다.</p><PersonForm buttonText="우리의 전생 찾기" onSubmit={submit}/></>}
  </section></Shell>}
 
-function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null);const [error,setError]=React.useState(false);React.useEffect(()=>{fetch(`${API}/relationships/${encodeURIComponent(id||'')}`).then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j)}).catch(()=>setError(true))},[id]);if(error)return <Shell><div className="card">전생 기록을 찾을 수 없습니다.</div></Shell>;if(!d?.relationship)return <Shell><div className="card">전생 기록을 불러오는 중...</div></Shell>;const r=d.relationship;return <Shell><section className="result"><p className="eyebrow">🔮 전생 기록</p><p className="era">{r.era}</p><h1>{r.label}</h1><h2>{r.ownerNickname} × {r.participantNickname}</h2><div className="card roles"><div><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div><div className="card story"><h3>두 사람의 전생 이야기</h3><p>{r.story}</p><blockquote>“{r.oneLiner}”</blockquote></div><div className="scores card">{Object.entries(r.scores||{}).map(([k,v])=><div key={k}><span>{k}</span><b>{String(v)}</b></div>)}</div>{r.pageSlug&&<Link className="primary link" to={`/n/${r.pageSlug}`}>전생 인연지도 보기</Link>}</section></Shell>}
+function ScoreBars({scores}:{scores:Record<string,number>}){return <div className="scores card"><div className="section-title"><span>☯</span><div><small>현생에 남은 흔적</small><h3>두 사람의 인연 지표</h3></div></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div></div>})}</div>}
+
+function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null);const [error,setError]=React.useState(false);React.useEffect(()=>{fetch(`${API}/relationships/${encodeURIComponent(id||'')}`).then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j)}).catch(()=>setError(true))},[id]);if(error)return <Shell><div className="card">전생 기록을 찾을 수 없습니다.</div></Shell>;if(!d?.relationship)return <Shell><div className="card loading-card">두 사람의 전생 기록을 펼치는 중...</div></Shell>;
+ const r=d.relationship;const icon=relationIcon(r.typeCode,r.label);const basis=r.analysisBasis;const factors=Array.isArray(basis?.key_factors)?basis.key_factors:[];
+ const share=async()=>{const url=location.href;const text=`${r.ownerNickname} × ${r.participantNickname}\n${icon} ${r.label}\n“${r.oneLiner}”`;if(navigator.share){try{await navigator.share({title:'사주로 보는 전생의 인연',text,url});return}catch{}}await navigator.clipboard.writeText(`${text}\n${url}`);alert('결과와 링크를 복사했습니다.');};
+ return <Shell><section className="result"><div className="result-hero"><p className="eyebrow">사주로 보는 전생의 인연</p><div className="result-icon">{icon}</div><p className="era">{r.era}</p><h1>{r.label}</h1><p className="pair">{r.ownerNickname} <span>×</span> {r.participantNickname}</p><p className="result-quote">“{r.oneLiner}”</p></div>
+ <div className="card roles"><div><small>전생의 역할</small><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><small>전생의 역할</small><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div>
+ <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
+ <ScoreBars scores={r.scores||{}}/>
+ {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}
+ <button className="primary share-btn" onClick={share}>결과 공유하기</button>{r.pageSlug&&<Link className="secondary link" to={`/n/${r.pageSlug}`}>전생 인연지도 돌아가기</Link>}<Link className="ghost-link" to="/create">나도 내 전생 인연지도 만들기 →</Link></section></Shell>}
 
 function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/result/:id" element={<Result/>}/></Routes>}
 createRoot(document.getElementById('root')!).render(<BrowserRouter><App/></BrowserRouter>);
