@@ -391,6 +391,43 @@ const vectorLabel=(key:string)=>({
  attachment:'질긴 인연',romance:'감정적 끌림',growth:'성장 자극',rivalry:'경쟁성'
 } as Record<string,string>)[key]||key;
 
+
+const deepPastLifeStory=(r:any,b:any)=>{
+ const owner=r?.ownerNickname||'두 사람 중 한 사람';
+ const participant=r?.participantNickname||'다른 한 사람';
+ const label=r?.label||'깊은 인연';
+ const factors=Array.isArray(b?.key_factors)?b.key_factors:[];
+ const vector=b?.vector||{};
+ const affinity=Number(vector.affinity||0);
+ const trust=Number(vector.trust||0);
+ const conflict=Number(vector.conflict||0);
+ const attachment=Number(vector.attachment||0);
+ const romance=Number(vector.romance||0);
+ const rivalry=Number(vector.rivalry||0);
+
+ let opening=`전생에서 ${owner}와 ${participant}의 관계는 ‘${label}’이라는 한 단어만으로 끝나는 인연은 아니었던 것으로 해석할 수 있어요. `;
+ if(affinity>=70||attachment>=70) opening+=`두 사람은 처음부터 스쳐 지나가는 사이보다는, 오랜 시간 같은 공간과 사건을 공유하며 서로의 삶에 깊숙이 관여했던 모습에 가깝습니다. `;
+ else opening+=`처음에는 특별할 것 없는 만남이었지만, 함께 겪은 사건과 선택이 쌓이면서 서로에게 의미가 커진 관계로 볼 수 있습니다. `;
+
+ let middle='';
+ if(trust>=65) middle+=`${owner}에게 ${participant}는 중요한 순간에 등을 맡길 수 있는 사람이었고, ${participant} 역시 ${owner}의 판단이나 존재를 쉽게 외면하지 못했을 가능성이 큽니다. `;
+ if(romance>=65) middle+=`그 과정에는 단순한 의무나 역할만으로 설명하기 어려운 강한 감정적 끌림도 섞여 있었던 것으로 읽힙니다. 서로를 의식하면서도 당시의 신분이나 책임 때문에 마음을 그대로 표현하지 못했을 수도 있어요. `;
+ if(rivalry>=60) middle+=`동시에 두 사람은 서로를 자극하는 경쟁자이기도 했습니다. 상대의 능력을 인정하기 때문에 더 의식했고, 가까운 만큼 비교와 긴장도 쉽게 생겼던 관계였을 수 있습니다. `;
+ if(conflict>=60) middle+=`특히 관계가 깊어질수록 의견과 선택이 충돌하는 순간도 적지 않았던 것으로 보입니다. 중요한 갈림길에서 서로 다른 선택을 하거나, 한쪽의 결정이 다른 한쪽에게 오래 남는 상처가 되었을 가능성도 있습니다. `;
+ if(attachment>=65) middle+=`그럼에도 쉽게 관계를 끊지 못했다는 점이 이 인연의 특징입니다. 멀어졌다가도 다시 얽히고, 끝났다고 생각한 뒤에도 서로의 선택에 영향을 주는 질긴 인연에 가까웠습니다. `;
+
+ let climax=`이 관계의 핵심은 누가 더 좋은 사람이었는지를 가리는 데 있지 않습니다. ${owner}와 ${participant}는 서로에게 하나의 ‘사건’처럼 남은 사람에 가깝습니다. `;
+ if(factors.length) climax+=`사주 관계에서 ${factors.slice(0,3).join(', ')} 같은 요소가 함께 잡힌다는 점도, 편안함 하나만으로 이어진 관계라기보다 서로의 삶의 방향을 움직이게 했던 인연이라는 해석을 더해줍니다. `;
+ climax+=`그래서 전생의 관계가 끝난 뒤에도 미처 다 하지 못한 말, 갚지 못한 마음, 확인하지 못한 감정 같은 여운이 남았다는 이야기로 풀어볼 수 있습니다. `;
+
+ let present=`현생에서 두 사람이 다시 만났다는 설정으로 본다면, 처음부터 이상하게 편하거나 반대로 별 이유 없이 신경 쓰이는 느낌으로 나타날 수 있습니다. `;
+ if(conflict>=60) present+=`가까워질수록 서로의 차이가 선명해질 수 있지만, 그 충돌 자체가 두 사람이 서로에게 배우는 지점이 될 수 있습니다. `;
+ else present+=`서로에게 자연스럽게 마음을 열거나, 짧은 시간에도 오래 알고 지낸 듯한 친숙함을 느끼기 쉬운 조합으로 볼 수 있습니다. `;
+ present+=`전생의 역할을 그대로 반복해야 한다는 뜻보다는, 과거의 관계에서 남았다고 상상할 수 있는 감정과 과제를 이번에는 조금 다른 방식으로 풀어가는 인연이라고 보면 가장 재미있습니다.`;
+
+ return {opening,middle,climax,present};
+};
+
 function DetailedSaju(){
  const {id}=useParams();
  const [d,setD]=React.useState<any>(null);
@@ -429,6 +466,17 @@ function DetailedSaju(){
      <span className="deep-symbol">☯</span>
      <div><small>핵심 전생 관계</small><h2>{r.label}</h2><p>“{r.oneLiner}”</p></div>
    </div>
+
+   {(()=>{const story=deepPastLifeStory(r,b);return <div className="card deep-pastlife-story">
+     <div className="section-title"><span>📖</span><div><small>전생 관계 이야기</small><h3>두 사람은 어떤 인연이었을까요?</h3></div></div>
+     <div className="deep-story-body">
+       <p>{story.opening}</p>
+       {story.middle&&<p>{story.middle}</p>}
+       <p>{story.climax}</p>
+       <div className="deep-story-present"><b>그리고 현생에서는</b><p>{story.present}</p></div>
+     </div>
+     <p className="deep-story-note">전통 명리 요소를 바탕으로 구성한 엔터테인먼트용 전생 스토리 해석입니다.</p>
+   </div>})()}
 
    <div className="element-pair-grid">
      <div className="element-detail card">

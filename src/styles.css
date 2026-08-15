@@ -931,3 +931,109 @@ footer{
   .deep-saju-hero h1{font-size:24px}
   .element-pair-grid,.pillar-grid{grid-template-columns:1fr}
 }
+
+
+/* =========================================================
+   개인 상세 화면 - 전생 역할 카드 밝은 베이지 테마
+   ========================================================= */
+
+/* 기존 검정/보라 역할 카드 색상 강제 덮어쓰기 */
+.role-card,
+.role-box,
+.person-role,
+.role-person,
+.result-role,
+.role-side,
+.role-panel,
+.role-pair > div,
+.roles > div{
+  background:linear-gradient(180deg,#fffdf9 0%,#f7eee3 100%)!important;
+  border:1px solid #dfcbb4!important;
+  color:#3b3026!important;
+  box-shadow:0 6px 18px rgba(91,67,43,.07)!important;
+}
+
+/* 역할 카드 안의 이름 */
+.role-card h2,
+.role-card h3,
+.role-card b,
+.role-box h2,
+.role-box h3,
+.role-box b,
+.person-role h2,
+.person-role h3,
+.person-role b,
+.role-side h2,
+.role-side h3,
+.role-side b,
+.role-pair h2,
+.role-pair h3,
+.role-pair b,
+.roles h2,
+.roles h3,
+.roles b{
+  color:#443528!important;
+}
+
+/* '전생의 역할' 같은 작은 설명 */
+.role-card small,
+.role-box small,
+.person-role small,
+.role-side small,
+.role-pair small,
+.roles small{
+  color:#9a8068!important;
+}
+
+/* 의제 / 의형 같은 역할 배지 */
+.role-card span,
+.role-box span,
+.person-role span,
+.role-side span,
+.role-pair span,
+.roles span{
+  color:#805e40!important;
+}
+
+/* 보라색 pill이 남아 있을 경우 베이지 pill로 변경 */
+.role-card em,
+.role-box em,
+.person-role em,
+.role-side em,
+.role-pair em,
+.roles em,
+.role-badge{
+  background:#ead9c5!important;
+  color:#755538!important;
+  border:1px solid #dbc1a4!important;
+  box-shadow:none!important;
+}
+
+/* 카드 전체를 감싸는 영역도 밝게 */
+.role-pair,
+.roles,
+.role-section{
+  background:#fffdf9!important;
+  border-color:#dfcbb4!important;
+}
+
+/* 심층 해석 - 전생 관계 스토리 */
+.deep-pastlife-story{margin-top:12px}
+.deep-story-body{margin-top:14px}
+.deep-story-body>p{
+  margin:0 0 13px;
+  color:#665446!important;
+  font-size:12px;
+  line-height:1.95;
+  word-break:keep-all;
+}
+.deep-story-present{
+  margin-top:17px;
+  padding:15px 16px;
+  border-radius:14px;
+  background:#f8f0e6;
+  border:1px solid #e7d6c3;
+}
+.deep-story-present>b{display:block;margin-bottom:7px;color:#805e40!important;font-size:12px}
+.deep-story-present>p{margin:0;color:#6d5a49!important;font-size:11px;line-height:1.85}
+.deep-story-note{margin:12px 0 0!important;color:#a18d7b!important;font-size:9px!important;line-height:1.6!important}
