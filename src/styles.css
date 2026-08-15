@@ -23,3 +23,8 @@
 .visitor-map-caption{text-align:center;margin:-4px 0 26px;color:#9b8fa3}
 .visitor-map-caption b{display:block;color:#d9c8e5;font-size:13px}
 .visitor-map-caption p{margin:5px 0 0;font-size:11px;line-height:1.55}
+
+.visitor-map-top{margin-top:18px}
+.visitor-map-top>.radial-card,
+.visitor-map-top>.empty-public-map{margin-top:12px}
+.below-map{margin-top:34px;padding-top:28px;border-top:1px solid #382b43}
