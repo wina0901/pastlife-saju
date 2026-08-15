@@ -141,3 +141,17 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .map-rank-badge{position:absolute;left:-8px;top:-9px;z-index:12;font-size:15px;filter:drop-shadow(0 2px 4px #0008)}
 .map-rank-1{font-size:18px}
 .dmine{background:#d397ff;box-shadow:0 0 8px #d397ff}
+
+.detail-under-map{margin-top:14px}
+
+/* 랭킹 상단 '내 현재 순위' 검정 박스 제거 */
+.my-rank-box,
+.my-rank-current,
+.ranking-my-summary,
+.current-rank-box{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  padding:0!important;
+}

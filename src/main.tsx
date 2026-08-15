@@ -250,14 +250,14 @@ function Page(){const {slug}=useParams();const [data,setData]=React.useState<any
      {mineRank?.rank===1&&<div className="new-first-banner">👑 새로운 1위 인연이 되었어요!</div>}
    </div>
    {publicMap}
+   <Link className="primary link detail-cta detail-under-map" to={`/result/${mine.id}`}>{data.owner_nickname}와 관계 자세히 보기</Link>
+   <p className="detail-hint">이 상세 결과는 본인 관계만 열 수 있어요.</p>
    <RelationshipRanking items={data.relationships} mineId={mineId}/>
    <HighlightGrid items={data.relationships} count={data.count}/>
    <div className="mine-relation-preview card">
      <span className="mine-preview-icon">{relationIcon(mine.type_code,mine.relationship_type)}</span>
      <div><small>나와 {data.owner_nickname}의 전생 관계</small><h3>{mine.relationship_type}</h3><p>전생 역할과 관계 점수, 사주 근거를 더 자세히 확인해보세요.</p></div>
    </div>
-   <Link className="primary link detail-cta" to={`/result/${mine.id}`}>{data.owner_nickname}와 관계 자세히 보기</Link>
-   <p className="detail-hint">이 상세 결과는 본인 관계만 열 수 있어요.</p>
    <button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button>
  </section></>:
  <><section className="visitor-map-top">
