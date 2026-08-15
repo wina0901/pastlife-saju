@@ -119,6 +119,67 @@ function HighlightGrid({items,count}:{items:any[];count:number}){
  </section>
 }
 
+
+function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[];clickable?:boolean;mineId?:string|null}){
+ const safeItems=Array.isArray(items)?items:[];
+ const ranked=[...safeItems].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
+ const rankById=new Map(ranked.map((x:any,i:number)=>[x.id,i+1]));
+ const maxVisible=16;
+ const visible=safeItems.slice(0,maxVisible);
+ const ringFor=(item:any)=>{
+   const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
+   return score>=88?0:score>=75?1:2;
+ };
+ const radii=[30,39,47];
+ const nodes=visible.map((item:any)=>{
+   const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
+   const ring=ringFor(item);
+   const sameRing=visible.filter((x:any)=>ringFor(x)===ring);
+   const ringIndex=Math.max(0,sameRing.findIndex((x:any)=>x.id===item.id));
+   const angle=(ringIndex/Math.max(1,sameRing.length))*Math.PI*2-(Math.PI/2)+(ring*.22);
+   return {
+     ...item,
+     x:50+Math.cos(angle)*radii[ring],
+     y:50+Math.sin(angle)*radii[ring],
+     score,
+     ring,
+     rank:rankById.get(item.id)||null
+   };
+ });
+ const renderNode=(n:any)=>{
+   const isMine=n.id===mineId;
+   const inner=<>
+     {n.rank&&n.rank<=3&&<span className={`map-rank-badge map-rank-${n.rank}`}>{n.rank===1?'👑':n.rank===2?'🥈':'🥉'}</span>}
+     <i>{relationIcon(n.type_code,n.relationship_type)}</i>
+     <b>{isMine?'나':n.nickname}</b>
+     <small>{n.score}</small>
+     {isMine&&<em>NEW</em>}
+   </>;
+   return clickable
+     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node ring-${n.ring} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.relationship_type||''}`}>{inner}</Link>
+     : <div key={n.id} className={`radial-node ring-${n.ring} visitor-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?'나의 인연':`${n.nickname}의 인연`}>{inner}</div>;
+ };
+ return <div className="radial-card card">
+   <div className="radial-title">
+     <p className="eyebrow">전생 인연지도</p>
+     <h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2>
+     <p>{mineId?'빛나는 노드가 방금 참여한 나입니다.':'인연의 깊이가 높을수록 중심에 가깝게 표시됩니다.'}</p>
+   </div>
+   <div className="radial-map">
+     <div className="orbit orbit-1"/><div className="orbit orbit-2"/><div className="orbit orbit-3"/>
+     <div className="center-person"><span>☯</span><b>{owner}</b></div>
+     {nodes.map(renderNode)}
+   </div>
+   {safeItems.length>maxVisible&&<p className="radial-more">+ {safeItems.length-maxVisible}명의 인연이 더 있습니다.</p>}
+   <div className="map-legend">
+     <span><i className="dot d1"/> 깊은 인연</span>
+     <span><i className="dot d2"/> 가까운 인연</span>
+     <span><i className="dot d3"/> 스쳐온 인연</span>
+     {mineId&&<span><i className="dot dmine"/> 나</span>}
+   </div>
+ </div>
+}
+
 function RelationshipRanking({items,mineId,ownerMode=false}:{items:any[];mineId?:string|null;ownerMode?:boolean}){
  const ranked=[...(items||[])].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
  if(!ranked.length)return null;

@@ -134,3 +134,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .visitor-input-section{margin-top:30px;padding-top:26px;border-top:1px solid #382b43}
 .visitor-input-section .join-intro{margin-bottom:12px}
 .visitor-unlock-section{margin-top:34px;padding-top:8px}
+
+.mine-node{border-color:#d397ff!important;box-shadow:0 0 0 3px #b96ee72b,0 0 30px #b96ee77a!important;z-index:10!important;animation:minePulse 1.4s ease-in-out infinite alternate}
+.mine-node>em{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);font-style:normal;font-size:7px;font-weight:900;letter-spacing:.08em;color:#e6bcff;background:#51336a;padding:3px 6px;border-radius:999px}
+@keyframes minePulse{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.08)}}
+.map-rank-badge{position:absolute;left:-8px;top:-9px;z-index:12;font-size:15px;filter:drop-shadow(0 2px 4px #0008)}
+.map-rank-1{font-size:18px}
+.dmine{background:#d397ff;box-shadow:0 0 8px #d397ff}
