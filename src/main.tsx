@@ -50,24 +50,24 @@ function AdSlot({placement='content'}:{placement?:string}){
 
 function AdGate(){
  const {id}=useParams();const nav=useNavigate();const [stage,setStage]=React.useState<'analyzing'|'ad'>('analyzing');const [left,setLeft]=React.useState(5);
+ const pageSlug=new URLSearchParams(location.search).get('page')||'';
  React.useEffect(()=>{const t=setTimeout(()=>setStage('ad'),1300);return()=>clearTimeout(t)},[]);
  React.useEffect(()=>{if(stage!=='ad')return;const t=setInterval(()=>setLeft(v=>{if(v<=1){clearInterval(t);return 0}return v-1}),1000);return()=>clearInterval(t)},[stage]);
- const go=()=>{if(left===0)nav(`/result/${id}`,{replace:true})};
+ const go=()=>{if(left!==0)return;if(pageSlug)nav(`/n/${encodeURIComponent(pageSlug)}?mine=${encodeURIComponent(id||'')}`,{replace:true});else nav(`/result/${id}`,{replace:true})};
  return <Shell><section className="ad-gate-page">
    {stage==='analyzing'?<div className="analysis-screen">
      <div className="analysis-orb"><span>☯</span><i/><i/><i/></div>
-     <p className="eyebrow">사주 분석 중</p><h1>두 사람의 전생 기록을<br/>찾고 있어요</h1>
-     <div className="analysis-steps"><span>✓ 사주팔자 확인</span><span>✓ 오행 관계 분석</span><span className="working">● 전생 인연 연결 중</span></div>
+     <p className="eyebrow">사주 분석 중</p><h1>두 사람의 인연을<br/>지도에 연결하고 있어요</h1>
+     <div className="analysis-steps"><span>✓ 사주팔자 확인</span><span>✓ 오행 관계 분석</span><span className="working">● 인연지도에 기록 중</span></div>
    </div>:<div className="reward-ad card">
-     <div className="reward-head"><span>🎁</span><div><p className="eyebrow">RESULT UNLOCK</p><h2>광고를 보고<br/>전생 결과를 확인하세요</h2></div></div>
+     <div className="reward-head"><span>🎁</span><div><p className="eyebrow">MAP UNLOCK</p><h2>광고를 보고<br/>완성된 인연지도를 확인하세요</h2></div></div>
      <div className="reward-ad-box"><div className="ad-label">ADVERTISEMENT</div><span className="big-ad">AD</span><b>결과 공개 전 광고 영역</b><p>실제 광고 연동 전 테스트 화면입니다.</p></div>
      <div className="reward-progress"><span style={{width:`${((5-left)/5)*100}%`}}/></div>
-     <p className="reward-time">{left>0?`${left}초 후 결과를 확인할 수 있어요`:'광고 시청이 완료되었습니다.'}</p>
-     <button disabled={left>0} onClick={go} className="primary">{left>0?'광고 시청 중...':'전생 결과 확인하기'}</button>
+     <p className="reward-time">{left>0?`${left}초 후 인연지도를 확인할 수 있어요`:'광고 시청이 완료되었습니다.'}</p>
+     <button disabled={left>0} onClick={go} className="primary">{left>0?'광고 시청 중...':'인연지도 확인하기'}</button>
    </div>}
  </section></Shell>
 }
-
 function PersonForm({buttonText,onSubmit}:{buttonText:string,onSubmit:(v:PersonInput)=>Promise<void>|void}){
  const [nickname,setNickname]=useState(''); const [birthDate,setBirthDate]=useState(''); const [birthTime,setBirthTime]=useState(''); const [calendarType,setCalendarType]=useState<'solar'|'lunar'>('solar'); const [busy,setBusy]=useState(false);
  return <form onSubmit={async e=>{e.preventDefault();setBusy(true);try{await onSubmit({nickname,birthDate,birthTime,calendarType})}finally{setBusy(false)}}} className="card form">
@@ -87,7 +87,7 @@ function Create(){const nav=useNavigate();const submit=async(v:PersonInput)=>{co
 
 function HighlightGrid({items,count}:{items:any[];count:number}){const hs=buildHighlights(items);return <div className="highlight-wrap"><div className="highlight-head"><p className="eyebrow">인연 분석</p><h2>친구들이 채워주는<br/>나의 전생 기록</h2></div><div className="highlight-grid">{hs.map(h=>{const unlocked=count>=h.need&&h.item;const left=Math.max(0,h.need-count);return <div className={`highlight-card ${unlocked?'unlocked':'locked-highlight'}`} key={h.title}>{unlocked?<><span className="highlight-icon">{h.icon}</span><small>{h.title}</small><b>{h.item.nickname}</b><em>{h.item.relationship_type}</em><strong>{h.score}</strong></>:<><span className="highlight-icon">🔒</span><small>{h.title}</small><b>{left}명 더 필요</b><em>{count} / {h.need}</em><div className="mini-progress"><span style={{width:`${Math.min(100,(count/h.need)*100)}%`}}/></div></>}</div>})}</div></div>}
 
-function RadialMap({owner,items}:{owner:string;items:any[]}){
+function RadialMap({owner,items,clickable=true,mineId}:{owner:string;items:any[];clickable?:boolean;mineId?:string|null}){
  const maxVisible=16;
  const visible=items.slice(0,maxVisible);
  const nodes=visible.map((item:any)=>{
@@ -101,29 +101,31 @@ function RadialMap({owner,items}:{owner:string;items:any[]}){
    const y=50+Math.sin(angle)*radii[ring];
    return {...item,x,y,score,ring};
  });
+ const node=(n:any)=>{const inner=<><i>{relationIcon(n.type_code,n.relationship_type)}</i><b>{n.id===mineId?'나':n.nickname}</b><small>{n.score}</small>{n.id===mineId&&<em>NEW</em>}</>;return clickable?<Link to={`/result/${n.id}`} key={n.id} className={`radial-node ring-${n.ring} ${n.id===mineId?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.relationship_type}`}>{inner}</Link>:<div key={n.id} className={`radial-node ring-${n.ring} visitor-node ${n.id===mineId?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={n.id===mineId?'나의 인연':`${n.nickname}의 인연`}>{inner}</div>};
  return <div className="radial-card card">
-   <div className="radial-title"><p className="eyebrow">전생 인연지도</p><h2>누가 내 곁에<br/>가장 가까이 있을까?</h2><p>인연의 깊이가 높을수록 중심에 가깝게 표시됩니다.</p></div>
+   <div className="radial-title"><p className="eyebrow">전생 인연지도</p><h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2><p>{mineId?'빛나는 노드가 방금 참여한 나입니다.':'인연의 깊이가 높을수록 중심에 가깝게 표시됩니다.'}</p></div>
    <div className="radial-map">
      <div className="orbit orbit-1"/><div className="orbit orbit-2"/><div className="orbit orbit-3"/>
      <div className="center-person"><span>☯</span><b>{owner}</b></div>
-     {nodes.map((n:any)=><Link to={`/result/${n.id}`} key={n.id} className={`radial-node ring-${n.ring}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.relationship_type}`}>
-       <i>{relationIcon(n.type_code,n.relationship_type)}</i><b>{n.nickname}</b><small>{n.score}</small>
-     </Link>)}
+     {nodes.map(node)}
    </div>
    {items.length>maxVisible&&<p className="radial-more">+ {items.length-maxVisible}명의 인연이 더 있습니다.</p>}
-   <div className="map-legend"><span><i className="dot d1"/> 깊은 인연</span><span><i className="dot d2"/> 가까운 인연</span><span><i className="dot d3"/> 스쳐온 인연</span></div>
+   <div className="map-legend"><span><i className="dot d1"/> 깊은 인연</span><span><i className="dot d2"/> 가까운 인연</span><span><i className="dot d3"/> 스쳐온 인연</span>{mineId&&<span><i className="dot dmine"/> 나</span>}</div>
  </div>
 }
-
 function Page(){const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);
+ const mineId=new URLSearchParams(location.search).get('mine');
  const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}`);const d=await r.json();setData(r.ok?d:null)}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);
  if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
- const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');location.href=`/ad/${d.relationship_id}`};
- const share=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
- return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">발견된 인연 <strong>{data.count}명</strong></div><AdSlot placement="map"/>
- {ownerMode?<><>{data.relationships.length===0?<div className="map card"><p>아직 발견된 인연이 없습니다.<br/>친구에게 이 페이지 주소를 공유해보세요.</p></div>:<><RadialMap owner={data.owner_nickname} items={data.relationships}/><div className="relation-list card"><div className="section-title"><span>🗂️</span><div><small>발견된 인연</small><h3>전체 인연 보기</h3></div></div>{data.relationships.map((x:any)=><Link className="relation-row" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><div><b>{x.nickname}</b><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></Link>)}</div><HighlightGrid items={data.relationships} count={data.count}/></>}</><button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 잠긴 전생 기록이 열립니다.</p></>:<><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">내 정보만 입력하면 두 사람의 사주 관계를 전생 이야기로 풀어드립니다.</p><PersonForm buttonText="우리의 전생 찾기" onSubmit={submit}/></>}
+ const mine=data.relationships?.find((x:any)=>x.id===mineId);
+ const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)return alert(d.error||'분석에 실패했습니다.');location.href=`/ad/${d.relationship_id}?page=${encodeURIComponent(slug||'')}`};
+ const share=async()=>{const url=`${location.origin}/n/${slug}`;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
+ const publicMap=data.relationships?.length>0?<RadialMap owner={data.owner_nickname} items={data.relationships} clickable={ownerMode} mineId={mineId}/>:<div className="empty-public-map card"><span>☯</span><b>아직 첫 인연을 기다리고 있어요</b><p>첫 번째로 참여해서 {data.owner_nickname}의 인연지도를 시작해보세요.</p></div>;
+ return <Shell><section><p className="eyebrow">🔮 전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count">지금까지 참여한 인연 <strong>{data.count}명</strong></div><AdSlot placement="map"/>
+ {ownerMode?<><>{publicMap}{data.relationships.length>0&&<><div className="relation-list card"><div className="section-title"><span>🗂️</span><div><small>발견된 인연</small><h3>전체 인연 보기</h3></div></div>{data.relationships.map((x:any)=><Link className="relation-row" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><div><b>{x.nickname}</b><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></Link>)}</div><HighlightGrid items={data.relationships} count={data.count}/></>}<button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 잠긴 전생 기록이 열립니다.</p></>:
+ mine?<><div className="joined-banner card"><span>✨</span><div><small>인연지도 참여 완료</small><h2>{mine.nickname}님이 새 인연으로 추가됐어요</h2><p>지도에서 빛나는 노드가 내 자리입니다.</p></div></div>{publicMap}<Link className="primary link detail-cta" to={`/result/${mine.id}`}>나와 {data.owner_nickname}의 관계 자세히 보기</Link><p className="detail-hint">전생 역할 · 관계 점수 · 사주 근거 · 전생 이야기를 확인할 수 있어요.</p><button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button></>:
+ <><div className="join-intro"><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">먼저 아래에 내 정보를 입력해보세요. 참여하기 전에도 현재까지 완성된 인연지도를 볼 수 있습니다.</p></div><PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/><div className="map-preview-heading"><p className="eyebrow">LIVE MAP</p><h2>벌써 {data.count}명이<br/>{data.owner_nickname}의 지도에 들어왔어요</h2><p>정보를 입력하면 나도 이 지도에 새로운 인연으로 추가됩니다.</p></div>{publicMap}</>}
  </section></Shell>}
-
 function ScoreBars({scores}:{scores:Record<string,number>}){return <div className="scores card"><div className="section-title"><span>☯</span><div><small>현생에 남은 흔적</small><h3>두 사람의 인연 지표</h3></div></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div></div>})}</div>}
 
 function drawRoundRect(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,r:number,fill:string,stroke?:string){
