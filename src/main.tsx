@@ -65,10 +65,16 @@ function AdSlot({placement='content'}:{placement?:string}){
 
 function AdGate(){
  const {id}=useParams();const nav=useNavigate();const [stage,setStage]=React.useState<'analyzing'|'ad'>('analyzing');const [left,setLeft]=React.useState(5);
- const pageSlug=new URLSearchParams(location.search).get('page')||'';
+ const params=new URLSearchParams(location.search);
+ const pageSlug=params.get('page')||'';
+ const target=params.get('target')||'';
  React.useEffect(()=>{const t=setTimeout(()=>{setStage('ad');track('ad_reached',{page_slug:pageSlug,relationship_id:id})},1300);return()=>clearTimeout(t)},[]);
  React.useEffect(()=>{if(stage!=='ad')return;const t=setInterval(()=>setLeft(v=>{if(v<=1){clearInterval(t);return 0}return v-1}),1000);return()=>clearInterval(t)},[stage]);
- const go=()=>{if(left!==0)return;if(pageSlug)nav(`/n/${encodeURIComponent(pageSlug)}?mine=${encodeURIComponent(id||'')}`,{replace:true});else nav(`/result/${id}`,{replace:true})};
+ const go=()=>{if(left!==0)return;
+   if(target==='saju')nav(`/saju/${encodeURIComponent(id||'')}`,{replace:true});
+   else if(pageSlug)nav(`/n/${encodeURIComponent(pageSlug)}?mine=${encodeURIComponent(id||'')}`,{replace:true});
+   else nav(`/result/${id}`,{replace:true});
+ };
  return <Shell><section className="ad-gate-page">
    {stage==='analyzing'?<div className="analysis-screen">
      <div className="analysis-orb"><span>☯</span><i/><i/><i/></div>
@@ -368,6 +374,114 @@ async function shareStoryCard(r:any){
  }catch(e){console.error(e);alert('이미지 생성 중 오류가 발생했습니다.');}
 }
 
+
+const elementKo=(e?:string)=>({wood:'목(木)',fire:'화(火)',earth:'토(土)',metal:'금(金)',water:'수(水)'} as Record<string,string>)[String(e||'')]||'미상';
+const elementMeaning=(e?:string)=>{
+ const m:Record<string,string>={
+  wood:'성장과 확장, 새로운 가능성을 중시하는 기운입니다.',
+  fire:'표현과 열정, 빠른 반응과 추진력이 강한 기운입니다.',
+  earth:'안정과 현실성, 관계를 오래 유지하려는 힘이 강한 기운입니다.',
+  metal:'원칙과 판단, 경계를 분명히 하고 결단하는 힘이 강한 기운입니다.',
+  water:'유연함과 통찰, 상황을 읽고 흐름에 맞추는 힘이 강한 기운입니다.'
+ };
+ return m[String(e||'')]||'';
+};
+const vectorLabel=(key:string)=>({
+ affinity:'친밀감',support:'상생·도움',trust:'신뢰',conflict:'충돌',
+ attachment:'질긴 인연',romance:'감정적 끌림',growth:'성장 자극',rivalry:'경쟁성'
+} as Record<string,string>)[key]||key;
+
+function DetailedSaju(){
+ const {id}=useParams();
+ const [d,setD]=React.useState<any>(null);
+ const [error,setError]=React.useState(false);
+
+ React.useEffect(()=>{
+   fetch(`${API}/relationships/${encodeURIComponent(id||'')}`)
+     .then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j)})
+     .catch(()=>setError(true));
+ },[id]);
+
+ if(error)return <Shell><div className="state-card card"><div className="state-icon">⚠️</div><h2>사주 해석을 불러오지 못했어요</h2><Link className="primary link" to={`/result/${id}`}>결과로 돌아가기</Link></div></Shell>;
+ if(!d?.relationship)return <Shell><div className="card loading-card">심층 사주 해석을 펼치는 중...</div></Shell>;
+
+ const r=d.relationship;
+ const b=r.analysisBasis||{};
+ const aEl=b?.day_elements?.a;
+ const bEl=b?.day_elements?.b;
+ const vector=b?.vector||{};
+ const pillars=b?.pillars||{};
+ const factors=Array.isArray(b?.key_factors)?b.key_factors:[];
+ const candidates=Array.isArray(b?.top_candidates)?b.top_candidates:[];
+
+ const sortedVector=Object.entries(vector)
+   .filter(([,v])=>typeof v==='number')
+   .sort((a:any,b:any)=>Number(b[1])-Number(a[1]));
+
+ return <Shell><section className="deep-saju-page">
+   <div className="deep-saju-hero">
+     <p className="eyebrow">DETAILED SAJU</p>
+     <h1>{r.ownerNickname} × {r.participantNickname}<br/>사주 관계 심층 해석</h1>
+     <p>두 사람의 일간·일지·오행 관계와 합·충 요소를 조금 더 자세하게 풀어봤어요.</p>
+   </div>
+
+   <div className="deep-summary card">
+     <span className="deep-symbol">☯</span>
+     <div><small>핵심 전생 관계</small><h2>{r.label}</h2><p>“{r.oneLiner}”</p></div>
+   </div>
+
+   <div className="element-pair-grid">
+     <div className="element-detail card">
+       <small>{r.ownerNickname}</small>
+       <h3>{elementKo(aEl)}</h3>
+       <p>{elementMeaning(aEl)}</p>
+     </div>
+     <div className="element-detail card">
+       <small>{r.participantNickname}</small>
+       <h3>{elementKo(bEl)}</h3>
+       <p>{elementMeaning(bEl)}</p>
+     </div>
+   </div>
+
+   <div className="card pillar-card">
+     <div className="section-title"><span>📜</span><div><small>사주 원국</small><h3>두 사람의 주요 기둥</h3></div></div>
+     <div className="pillar-grid">
+       <div><b>{r.ownerNickname}</b><span>연주 {pillars?.a?.year||'-'}</span><span>월주 {pillars?.a?.month||'-'}</span><span>일주 {pillars?.a?.day||'-'}</span><span>시주 {pillars?.a?.hour||'미입력'}</span></div>
+       <div><b>{r.participantNickname}</b><span>연주 {pillars?.b?.year||'-'}</span><span>월주 {pillars?.b?.month||'-'}</span><span>일주 {pillars?.b?.day||'-'}</span><span>시주 {pillars?.b?.hour||'미입력'}</span></div>
+     </div>
+   </div>
+
+   <div className="card deep-factors">
+     <div className="section-title"><span>🧭</span><div><small>관계 근거</small><h3>두 사람 사이에서 강하게 잡힌 요소</h3></div></div>
+     {factors.length?<div className="deep-factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div>:<p className="muted">강하게 잡힌 특수 요소가 많지 않은 조합입니다.</p>}
+     <p className="deep-explain">이 요소들은 전통 명리의 합·충·형·파·해·원진과 오행의 상생·상극을 관계 성향으로 바꿔 해석한 것입니다.</p>
+   </div>
+
+   <div className="card vector-card">
+     <div className="section-title"><span>📊</span><div><small>관계 성향</small><h3>어떤 성향이 특히 강한가요?</h3></div></div>
+     <div className="vector-detail-list">
+       {sortedVector.map(([k,v]:any)=><div className="vector-detail-row" key={k}>
+         <div><span>{vectorLabel(k)}</span><b>{Number(v)}</b></div>
+         <div className="vector-detail-track"><span style={{width:`${Math.max(0,Math.min(100,Number(v)))}%`}}/></div>
+       </div>)}
+     </div>
+   </div>
+
+   {candidates.length>1&&<div className="card candidate-card">
+     <div className="section-title"><span>🔮</span><div><small>관계 후보</small><h3>비슷하게 나타난 전생 관계</h3></div></div>
+     <p className="muted">현재 결과와 비슷한 성향으로 계산된 다른 관계 유형입니다.</p>
+     <div className="candidate-list">{candidates.map((x:any,i:number)=><div key={x.code||i}><span>{i+1}</span><div><b>{x.label}</b><small>{x.category}</small></div></div>)}</div>
+   </div>}
+
+   <div className="card deep-advice">
+     <div className="section-title"><span>💡</span><div><small>현생 관계 포인트</small><h3>이 관계를 이렇게 보면 재미있어요</h3></div></div>
+     <p>점수가 높은 요소는 두 사람이 자연스럽게 반복하기 쉬운 관계 패턴이고, 충돌이 높은 요소는 서로 다름을 강하게 느끼기 쉬운 부분입니다. 좋은 관계와 나쁜 관계를 판정하기보다, “왜 이 사람과 이런 분위기가 생기는지”를 보는 재미로 활용해보세요.</p>
+   </div>
+
+   <Link className="secondary link" to={`/result/${id}`}>← 기본 관계 결과로 돌아가기</Link>
+ </section></Shell>
+}
+
 function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null);const [error,setError]=React.useState(false);const [making,setMaking]=React.useState(false);React.useEffect(()=>{fetch(`${API}/relationships/${encodeURIComponent(id||'')}`).then(async r=>{const j=await r.json();if(!r.ok)throw new Error();setD(j);track('result_view',{page_slug:j?.relationship?.pageSlug,relationship_id:id})}).catch(()=>setError(true))},[id]);if(error)return <Shell><div className="card">전생 기록을 찾을 수 없습니다.</div></Shell>;if(!d?.relationship)return <Shell><div className="card loading-card">두 사람의 전생 기록을 펼치는 중...</div></Shell>;
  const r=d.relationship;const icon=relationIcon(r.typeCode,r.label);const basis=r.analysisBasis;const factors=Array.isArray(basis?.key_factors)?basis.key_factors:[];
  const share=async()=>{track('share_click',{page_slug:r.pageSlug,relationship_id:id,metadata:{source:'result'}});const url=location.href;const text=`${r.ownerNickname} × ${r.participantNickname}\n${icon} ${r.label}\n“${r.oneLiner}”`;if(navigator.share){try{await navigator.share({title:'사주로 보는 전생의 인연',text,url});return}catch{}}await navigator.clipboard.writeText(`${text}\n${url}`);alert('결과와 링크를 복사했습니다.');};
@@ -376,7 +490,7 @@ function Result(){const {id}=useParams();const [d,setD]=React.useState<any>(null
  <div className="card roles"><div><small>전생의 역할</small><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><small>전생의 역할</small><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div>
  <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
  <ScoreBars scores={r.scores||{}}/><AdSlot placement="result"/>
- {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}
+ {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}<div className="deep-unlock-card card"><span>🔐</span><div><small>PREMIUM INTERPRETATION</small><h3>사주 해석 자세히 보기</h3><p>두 사람의 오행, 사주 기둥, 합·충 요소와 관계 성향을 더 자세히 확인할 수 있어요.</p></div><Link className="primary link" to={`/ad/${id}?target=saju`}>광고 보고 자세히 보기</Link></div>
  <section className="viral-result-section"><div className="viral-result-head"><p className="eyebrow">SHARE YOUR FATE</p><h2>이 결과, 친구에게도<br/>보여주고 싶지 않나요?</h2><p>결과를 공유하거나 내 인연지도를 만들면 또 다른 친구들과 전생 관계를 비교할 수 있어요.</p></div><div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 결과 카드</b><p>관계 유형과 점수가 담긴 9:16 이미지를 만들어 공유하세요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div><button className="primary share-btn" onClick={share}>친구에게 이 결과 공유하기</button><div className="become-owner-card card"><span>🔮</span><div><small>이번에는 내가 중심이 되어볼 차례</small><h3>내 전생 인연지도 만들기</h3><p>내 링크를 만들고 친구들을 초대하면 누가 나와 가장 깊은 인연인지 랭킹으로 확인할 수 있어요.</p></div><Link className="primary link" to="/create">내 인연지도 만들기</Link></div>{r.pageSlug&&<Link className="secondary link return-map-btn" to={`/n/${r.pageSlug}`}>← {r.ownerNickname}의 인연지도 돌아가기</Link>}</section></section></Shell>}
 
 
@@ -439,5 +553,5 @@ class ErrorBoundary extends React.Component<{children:React.ReactNode},{error:bo
 }
 function NotFound(){return <Shell><div className="state-card card"><div className="state-icon">🧭</div><p className="eyebrow">404</p><h2>찾을 수 없는 페이지예요</h2><p>주소가 잘못되었거나 삭제된 인연지도일 수 있습니다.</p><Link className="primary link" to="/">처음으로 돌아가기</Link></div></Shell>}
 
-function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="*" element={<NotFound/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
+function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/ad/:id" element={<AdGate/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/saju/:id" element={<DetailedSaju/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="*" element={<NotFound/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/></Routes>}
 createRoot(document.getElementById('root')!).render(<BrowserRouter><ErrorBoundary><App/></ErrorBoundary></BrowserRouter>);
