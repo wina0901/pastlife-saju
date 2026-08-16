@@ -1454,3 +1454,6 @@ a{
     box-shadow:0 4px 14px rgba(91,68,45,.06)!important;
   }
 }
+
+/* AdSense 재심사: 광고 전용/가짜 placeholder 숨김 */
+.ad-placeholder,.ad-slot-placeholder,.fake-ad,.ad-preview,.adsense-placeholder{display:none!important;}

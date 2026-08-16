@@ -54,6 +54,7 @@ function buildHighlights(items:any[]){
 const ADS_PREVIEW=false;
 const ADSENSE_REVIEW_MODE=true;
 function AdSlot({placement='content'}:{placement?:string}){
+ if(ADSENSE_REVIEW_MODE)return null;
  if(!ADS_PREVIEW)return null;
  return <aside className={`ad-slot ad-${placement}`} aria-label="광고 영역">
    <div className="ad-label">ADVERTISEMENT</div>
