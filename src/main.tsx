@@ -70,6 +70,22 @@ function Home(){usePageMeta("사주로 보는 전생의 인연 | 인연지도와
   <section className="home-info-card"><span>02</span><h2>전생 역할로 쉽게 풀어줘요</h2><p>계산된 관계를 왕과 신하, 스승과 제자, 평생의 벗처럼 이해하기 쉬운 전생 이야기 형식으로 바꿉니다.</p></section>
   <section className="home-info-card"><span>03</span><h2>친구가 늘수록 지도가 완성돼요</h2><p>친구들이 참여하면 인연의 깊이에 따라 지도에 배치되고, 관계 랭킹과 특별 인연 기록이 함께 쌓입니다.</p></section>
 </div>
+<section className="home-editorial card">
+  <p className="eyebrow">HOW IT WORKS</p>
+  <h2>궁합 점수 하나가 아니라, 두 사람 사이의 관계 패턴을 읽습니다</h2>
+  <p>사주로 보는 전생의 인연은 생년월일과 선택적으로 입력한 출생시간을 바탕으로 두 사람의 일간·일지, 오행의 상생과 상극, 천간과 지지의 합·충·형·파·해·원진 같은 관계 신호를 함께 살펴봅니다. 어느 하나의 요소만으로 ‘좋은 관계’나 ‘나쁜 관계’를 정하지 않고, 친밀감·신뢰·충돌·성장 자극·경쟁성·질긴 인연처럼 서로 다른 성격의 지표로 나누어 해석합니다.</p>
+  <p>그다음 복잡한 관계 신호를 왕과 충신, 스승과 제자, 평생의 벗, 숙명의 라이벌 같은 이야기 유형으로 바꿉니다. 전생이라는 표현은 실제 과거 생을 증명하기 위한 주장이 아니라, 두 사람 사이의 관계 특징을 기억하고 대화하기 쉽게 만드는 서사 장치입니다. 같은 두 사람이 같은 조건으로 참여하면 핵심 관계가 무작위로 바뀌지 않도록 일관된 계산 규칙을 사용합니다.</p>
+  <p>친구가 링크를 통해 참여할수록 한 명씩 따로 보는 결과가 아니라 하나의 인연지도가 만들어집니다. 지도와 랭킹은 누가 더 좋은 사람인지 평가하기 위한 기능이 아니라, 페이지 주인과 각 참여자 사이에서 어떤 관계 신호가 상대적으로 강하게 나타났는지 비교해서 보는 놀이형 시각화입니다. 결과를 보기 전에 개념이 궁금하다면 아래 읽을거리에서 오행, 합과 충, 원진, 관계 점수의 의미를 먼저 살펴볼 수 있습니다.</p>
+</section>
+<section className="home-article-section">
+  <div className="section-title"><span>📚</span><div><small>EDITORIAL</small><h2>처음 읽기 좋은 사주 관계 글</h2></div></div>
+  <div className="home-article-grid">
+    <a href="/contents/compatibility-vs-relationship.html"><b>사주 궁합과 인연 해석의 차이</b><span>점수보다 관계의 방향과 패턴을 보는 이유</span></a>
+    <a href="/contents/good-bad-relationship.html"><b>좋은 인연·나쁜 인연을 나눌 수 있을까</b><span>충돌이 높아도 의미 있는 관계가 될 수 있는 이유</span></a>
+    <a href="/contents/five-elements.html"><b>오행과 인간관계</b><span>상생과 상극을 도움과 자극의 언어로 읽는 법</span></a>
+    <a href="/contents/relationship-score.html"><b>관계 점수 읽는 법</b><span>높은 숫자가 곧 좋은 관계를 뜻하지 않는 이유</span></a>
+  </div>
+</section>
 <div className="home-readmore"><Link to="/methodology">인연 해석 원리 자세히 보기 →</Link><Link to="/guide">27가지 전생 관계 유형 보기 →</Link></div><div className="home-content-callout"><p className="eyebrow">READ MORE</p><h2>결과에 쓰이는 사주 관계 개념을 읽어보세요</h2><p>오행, 천간, 지지, 합·충·형·파·해, 원진과 관계 점수를 각각 독립된 글로 정리했습니다.</p><a className="secondary link" href="/contents/">사주 관계 읽을거리 보기</a></div>
 </section></Shell>}
 
@@ -519,6 +535,7 @@ function Result(){usePageMeta('전생 관계 결과 | 사주로 보는 전생의
  <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
  <ScoreBars scores={r.scores||{}}/>
  {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}<div className="deep-unlock-card card"><span>🔐</span><div><small>PREMIUM INTERPRETATION</small><h3>사주 해석 자세히 보기</h3><p>두 사람의 오행, 사주 기둥, 합·충 요소와 관계 성향을 더 자세히 확인할 수 있어요.</p></div><Link className="primary link" to={`/saju/${id}`}>심층 사주 해석 보기</Link></div>
+ <section className="result-related-content card"><p className="eyebrow">RESULT GUIDE</p><h3>이 결과를 더 이해하고 싶다면</h3><p>결과에 표시된 점수와 관계 유형은 한 가지 사주 요소만으로 결정되지 않습니다. 아래 해설에서 각 신호가 어떤 의미로 사용되는지 확인할 수 있습니다.</p><div className="result-related-links"><a href="/contents/relationship-score.html">관계 점수는 어떻게 읽어야 할까 →</a><a href="/contents/harmony-conflict.html">합·충·형·파·해의 차이 →</a><a href="/contents/pastlife-types.html">전생 관계 유형은 어떻게 만들어질까 →</a></div></section>
  <section className="viral-result-section"><div className="viral-result-head"><p className="eyebrow">SHARE YOUR FATE</p><h2>이 결과, 친구에게도<br/>보여주고 싶지 않나요?</h2><p>결과를 공유하거나 내 인연지도를 만들면 또 다른 친구들과 전생 관계를 비교할 수 있어요.</p></div><div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 결과 카드</b><p>관계 유형과 점수가 담긴 9:16 이미지를 만들어 공유하세요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div><button className="primary share-btn" onClick={share}>친구에게 이 결과 공유하기</button><div className="become-owner-card card"><span>🔮</span><div><small>이번에는 내가 중심이 되어볼 차례</small><h3>내 전생 인연지도 만들기</h3><p>내 링크를 만들고 친구들을 초대하면 누가 나와 가장 깊은 인연인지 랭킹으로 확인할 수 있어요.</p></div><Link className="primary link" to="/create">내 인연지도 만들기</Link></div>{r.pageSlug&&<Link className="secondary link return-map-btn" to={`/n/${r.pageSlug}`}>← {r.ownerNickname}의 인연지도 돌아가기</Link>}</section></section></Shell>}
 
 
