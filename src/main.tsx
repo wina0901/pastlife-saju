@@ -13,7 +13,7 @@ const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST'
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
-const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link><nav className="top-nav"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link></nav></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
+const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link><nav className="top-nav"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/contents/">읽을거리</Link><Link to="/faq">FAQ</Link></nav></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link><a href="/contents/">읽을거리</a><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
 
 const relationIcon=(code?:string,label?:string)=>{
  const byCode:Record<string,string>={KING_LOYALIST:'👑',KING_ADVISOR:'📜',COMRADES:'⚔️',TEACHER_STUDENT:'📖',RIVALS:'🔥',OLD_FRIENDS:'🤝',UNFINISHED_LOVERS:'💘',BENEFACTOR:'💎',MERCHANT_RIVALS:'💰',TROUBLE_FIXER:'💥',GUARD_ROYAL:'🛡️',FOES_TO_FRIENDS:'🪢',SIBLINGS:'🏠',WANDERERS:'🧭',HEALER_PATIENT:'🌿',PATRON_ARTIST:'🎨',FORBIDDEN_LOVE:'🌙',ONE_SIDED_LOVE:'💌',NEIGHBOR_RIVALS:'🏘️',CAPTAIN_NAVIGATOR:'⛵'};
@@ -70,7 +70,7 @@ function Home(){usePageMeta("사주로 보는 전생의 인연 | 인연지도와
   <section className="home-info-card"><span>02</span><h2>전생 역할로 쉽게 풀어줘요</h2><p>계산된 관계를 왕과 신하, 스승과 제자, 평생의 벗처럼 이해하기 쉬운 전생 이야기 형식으로 바꿉니다.</p></section>
   <section className="home-info-card"><span>03</span><h2>친구가 늘수록 지도가 완성돼요</h2><p>친구들이 참여하면 인연의 깊이에 따라 지도에 배치되고, 관계 랭킹과 특별 인연 기록이 함께 쌓입니다.</p></section>
 </div>
-<div className="home-readmore"><Link to="/methodology">인연 해석 원리 자세히 보기 →</Link><Link to="/guide">27가지 전생 관계 유형 보기 →</Link></div>
+<div className="home-readmore"><Link to="/methodology">인연 해석 원리 자세히 보기 →</Link><Link to="/guide">27가지 전생 관계 유형 보기 →</Link></div><div className="home-content-callout"><p className="eyebrow">READ MORE</p><h2>결과에 쓰이는 사주 관계 개념을 읽어보세요</h2><p>오행, 천간, 지지, 합·충·형·파·해, 원진과 관계 점수를 각각 독립된 글로 정리했습니다.</p><a className="secondary link" href="/contents/">사주 관계 읽을거리 보기</a></div>
 </section></Shell>}
 
 function usePageMeta(title:string,description?:string,noindex=false){

@@ -1,0 +1,17 @@
+AdSense 승인 우선 버전
+
+변경
+- 광고 게이트를 심사 중 우회하도록 ADSENSE_REVIEW_MODE=true
+- About 페이지 내용 보강
+- 해석 원리(Methodology) 페이지 추가
+- 메타 description/robots/canonical 추가
+- robots.txt, sitemap.xml 추가
+- 개인정보/약관/FAQ/문의 이메일 유지
+- 기존 핵심 기능은 유지
+
+심사 전 권장
+- Cloudflare 배포 후 모든 메뉴 200 응답 확인
+- Search Console에 sitemap 제출
+- AdSense Privacy & messaging에서 Google CMP 설정
+- 광고 승인 전 fake 광고 placeholder는 노출하지 않기
+- 승인 후 실제 광고 포맷을 확인한 다음 ADSENSE_REVIEW_MODE=false로 전환
