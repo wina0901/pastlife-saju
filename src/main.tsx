@@ -424,6 +424,43 @@ const deepPastLifeStory=(r:any,b:any)=>{
  return {opening,middle,climax,present};
 };
 
+type EditorialLink={href:string;title:string;description:string};
+const EDITORIAL_LINKS:Record<string,EditorialLink>={
+ wonjin:{href:'/contents/wonjin.html',title:'원진 관계란?',description:'쉽게 끊기지 않는 긴장과 감정의 꼬임을 읽는 법'},
+ samhap:{href:'/contents/samhap.html',title:'삼합이 만드는 연결감',description:'여러 관계 신호가 한 방향으로 모일 때의 의미'},
+ harmony:{href:'/contents/harmony-conflict.html',title:'합·충·형·파·해는 어떻게 다를까',description:'끌림과 충돌을 한쪽의 좋고 나쁨으로 보지 않는 이유'},
+ elements:{href:'/contents/five-elements.html',title:'오행과 인간관계',description:'상생과 상극을 도움과 자극의 흐름으로 읽는 법'},
+ stems:{href:'/contents/heavenly-stems.html',title:'천간으로 보는 관계의 방향',description:'일간과 천간 관계가 어떤 흐름을 만드는지 알아보기'},
+ branches:{href:'/contents/earthly-branches.html',title:'지지와 일지로 보는 관계',description:'관계 해석에서 일지와 지지 신호를 읽는 방법'},
+ score:{href:'/contents/relationship-score.html',title:'관계 점수는 어떻게 읽어야 할까',description:'높은 숫자가 곧 좋은 관계를 뜻하지 않는 이유'},
+ goodbad:{href:'/contents/good-bad-relationship.html',title:'좋은 인연과 나쁜 인연을 나눌 수 있을까',description:'충돌이 높아도 의미 있는 관계가 될 수 있는 이유'},
+ repeating:{href:'/contents/repeating-relationships.html',title:'왜 비슷한 관계가 반복된다고 느낄까',description:'질긴 인연과 반복되는 관계 패턴을 바라보는 방법'},
+ types:{href:'/contents/pastlife-types.html',title:'전생 관계 유형은 어떻게 만들어질까',description:'여러 관계 신호가 하나의 이야기 유형이 되는 과정'},
+};
+function editorialRecommendations(r:any):EditorialLink[]{
+ const b=r?.analysisBasis||{};
+ const factors=(Array.isArray(b?.key_factors)?b.key_factors:[]).map((x:any)=>String(x).toLowerCase());
+ const text=[...factors,String(r?.label||''),String(r?.typeCode||'')].join(' ');
+ const vector=b?.vector||{};
+ const score=(...keys:string[])=>Math.max(0,...keys.map(k=>Number(r?.scores?.[k]??vector?.[k]??0)));
+ const picks:string[]=[];
+ const add=(k:string)=>{if(EDITORIAL_LINKS[k]&&!picks.includes(k))picks.push(k)};
+ if(/원진|wonjin/.test(text))add('wonjin');
+ if(/삼합|samhap|three.?harmony/.test(text))add('samhap');
+ if(/충|형|파|해|합|clash|harm|break|punish|combine|六合|육합/.test(text))add('harmony');
+ if(/상생|상극|오행|wood|fire|earth|metal|water|생|극/.test(text))add('elements');
+ if(/일간|천간|stem/.test(text))add('stems');
+ if(/일지|지지|branch/.test(text))add('branches');
+ if(score('충돌','conflict','rivalry')>=65)add('goodbad');
+ if(score('질긴인연','attachment')>=65)add('repeating');
+ add('score'); add('types');
+ return picks.slice(0,3).map(k=>EDITORIAL_LINKS[k]);
+}
+function RelatedReading({relationship}:{relationship:any}){
+ const links=editorialRecommendations(relationship);
+ return <section className="related-reading" aria-labelledby="related-reading-title"><div className="section-kicker">결과 해설</div><h2 id="related-reading-title">이 결과에 나온 개념 더 읽어보기</h2><p>지금 결과에서 눈에 띄는 관계 신호와 가까운 해설을 골랐습니다.</p><div className="related-reading-links">{links.map(x=><a key={x.href} href={x.href}><b>{x.title}</b><span>{x.description}</span></a>)}</div></section>;
+}
+
 function DetailedSaju(){usePageMeta('사주 관계 심층 해석 | 사주로 보는 전생의 인연',undefined,true);
  const {id}=useParams();
  const [d,setD]=React.useState<any>(null);
@@ -522,6 +559,7 @@ function DetailedSaju(){usePageMeta('사주 관계 심층 해석 | 사주로 보
      <p>점수가 높은 요소는 두 사람이 자연스럽게 반복하기 쉬운 관계 패턴이고, 충돌이 높은 요소는 서로 다름을 강하게 느끼기 쉬운 부분입니다. 좋은 관계와 나쁜 관계를 판정하기보다, “왜 이 사람과 이런 분위기가 생기는지”를 보는 재미로 활용해보세요.</p>
    </div>
 
+   <RelatedReading relationship={r}/>
    <Link className="secondary link" to={`/result/${id}`}>← 기본 관계 결과로 돌아가기</Link>
  </section></Shell>
 }
@@ -534,8 +572,8 @@ function Result(){usePageMeta('전생 관계 결과 | 사주로 보는 전생의
  <div className="card roles"><div><small>전생의 역할</small><strong>{r.ownerNickname}</strong><span>{r.ownerRole}</span></div><div><small>전생의 역할</small><strong>{r.participantNickname}</strong><span>{r.participantRole}</span></div></div>
  <div className="card story"><div className="section-title"><span>📜</span><div><small>전생 기록</small><h3>두 사람의 이야기</h3></div></div><p>{r.story}</p></div>
  <ScoreBars scores={r.scores||{}}/>
- {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}<div className="deep-unlock-card card"><span>🔐</span><div><small>PREMIUM INTERPRETATION</small><h3>사주 해석 자세히 보기</h3><p>두 사람의 오행, 사주 기둥, 합·충 요소와 관계 성향을 더 자세히 확인할 수 있어요.</p></div><Link className="primary link" to={`/saju/${id}`}>심층 사주 해석 보기</Link></div>
- <section className="result-related-content card"><p className="eyebrow">RESULT GUIDE</p><h3>이 결과를 더 이해하고 싶다면</h3><p>결과에 표시된 점수와 관계 유형은 한 가지 사주 요소만으로 결정되지 않습니다. 아래 해설에서 각 신호가 어떤 의미로 사용되는지 확인할 수 있습니다.</p><div className="result-related-links"><a href="/contents/relationship-score.html">관계 점수는 어떻게 읽어야 할까 →</a><a href="/contents/harmony-conflict.html">합·충·형·파·해의 차이 →</a><a href="/contents/pastlife-types.html">전생 관계 유형은 어떻게 만들어질까 →</a></div></section>
+ {factors.length>0&&<div className="card basis"><div className="section-title"><span>🧭</span><div><small>사주 관계 해석</small><h3>왜 이런 결과가 나왔을까요?</h3></div></div><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</div>}<div className="deep-unlock-card"><div><small>심층 관계 해석</small><h3>사주 해석 자세히 보기</h3><p>두 사람의 오행, 사주 기둥, 합·충 요소와 관계 성향을 더 자세히 확인할 수 있어요.</p></div><Link className="primary link" to={`/saju/${id}`}>심층 사주 해석 보기</Link></div>
+ <RelatedReading relationship={r}/>
  <section className="viral-result-section"><div className="viral-result-head"><p className="eyebrow">SHARE YOUR FATE</p><h2>이 결과, 친구에게도<br/>보여주고 싶지 않나요?</h2><p>결과를 공유하거나 내 인연지도를 만들면 또 다른 친구들과 전생 관계를 비교할 수 있어요.</p></div><div className="share-card-box card"><div><span>📱</span><div><b>인스타 스토리용 결과 카드</b><p>관계 유형과 점수가 담긴 9:16 이미지를 만들어 공유하세요.</p></div></div><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중...':'스토리 이미지 만들기'}</button></div><button className="primary share-btn" onClick={share}>친구에게 이 결과 공유하기</button><div className="become-owner-card card"><span>🔮</span><div><small>이번에는 내가 중심이 되어볼 차례</small><h3>내 전생 인연지도 만들기</h3><p>내 링크를 만들고 친구들을 초대하면 누가 나와 가장 깊은 인연인지 랭킹으로 확인할 수 있어요.</p></div><Link className="primary link" to="/create">내 인연지도 만들기</Link></div>{r.pageSlug&&<Link className="secondary link return-map-btn" to={`/n/${r.pageSlug}`}>← {r.ownerNickname}의 인연지도 돌아가기</Link>}</section></section></Shell>}
 
 
@@ -573,32 +611,27 @@ function FAQ(){usePageMeta("자주 묻는 질문 | 사주로 보는 전생의 �
 
 function LegalLayout({title,updated,children}:{title:string;updated:string;children:React.ReactNode}){return <Shell><article className="legal"><p className="eyebrow">SERVICE POLICY</p><h1>{title}</h1><p className="legal-updated">최종 수정: {updated}</p>{children}</article></Shell>}
 
-function Privacy(){usePageMeta("개인정보처리방침 | 사주로 보는 전생의 인연","전생 인연지도 서비스의 개인정보 처리, 외부 서비스, 쿠키 및 Google 광고 관련 내용을 안내합니다.",false);return <LegalLayout title="개인정보처리방침" updated="2026.08.18">
+function Privacy(){usePageMeta("개인정보처리방침 | 사주로 보는 전생의 인연","전생 인연지도 서비스의 개인정보 처리, 외부 서비스, 쿠키 및 광고 서비스 이용 내용을 안내합니다.",false);return <LegalLayout title="개인정보처리방침" updated="2026.09.27">
  <section><h2>1. 처리하는 개인정보와 이용 목적</h2><p>서비스는 전생 관계 분석과 인연지도 제공을 위해 닉네임, 생년월일, 양력·음력 구분, 이용자가 선택적으로 입력한 출생시간을 처리합니다. 입력한 생년월일과 출생시간은 다른 이용자에게 공개하지 않습니다.</p></section>
  <section><h2>2. 개인정보의 보유 및 이용기간</h2><p>개인정보는 인연지도와 관계 결과를 계속 제공하기 위해 서비스 이용 기간 동안 보관될 수 있으며, 정보주체가 삭제를 요청하거나 서비스 제공 목적이 소멸하면 관련 법령상 보관 의무가 있는 경우를 제외하고 파기합니다.</p></section>
- <section><h2>3. 개인정보의 제3자 제공</h2><p>서비스는 이용자의 개인정보를 임의로 판매하지 않습니다. 다만 웹 호스팅, 데이터베이스, 광고 및 사이트 운영을 위해 아래 외부 서비스가 기술적으로 정보를 처리할 수 있습니다. 각 서비스의 처리 범위는 해당 사업자의 정책 및 서비스 설정에 따릅니다.</p></section>
- <section><h2>4. 외부 서비스 및 처리업무</h2>
-   <p><b>Cloudflare</b> — 웹사이트 호스팅, 콘텐츠 전송, 보안 및 네트워크 처리를 위해 사용합니다.</p>
-   <p><b>Supabase</b> — 이용자가 입력한 정보, 인연지도 및 관계 결과의 데이터베이스 저장과 서버 기능 제공을 위해 사용합니다.</p>
-   <p><b>Google AdSense</b> — 사이트 검토 및 향후 광고 제공을 위해 Google 광고 서비스를 사용할 수 있습니다. Google 광고 서비스가 활성화된 경우 이용자의 브라우저에서 방문 중인 페이지의 URL, IP 주소, 브라우저·기기 관련 정보 및 쿠키 또는 유사한 식별자가 Google에 전송되거나 처리될 수 있습니다. 제3자 공급업체인 Google은 쿠키를 사용하여 이용자의 이전 방문 기록 등을 바탕으로 광고를 게재할 수 있으며, 이용자는 Google 광고 설정에서 개인 맞춤 광고 사용 여부를 관리할 수 있습니다. Google은 이러한 정보를 광고 제공, 광고 효과 측정, 사기 및 악용 방지, 서비스 개선 및 이용자 설정에 따른 광고 개인 최적화 등에 사용할 수 있습니다.</p>
- </section>
- <section><h2>5. 쿠키 및 유사 기술</h2><p>서비스 자체 또는 외부 서비스 제공자는 서비스 제공, 보안, 광고 제공 및 측정을 위해 쿠키나 기타 로컬 저장 기술을 사용할 수 있습니다. Google 광고 서비스가 사용되는 경우 Google이 브라우저에 쿠키를 설정하거나 기존 쿠키를 읽을 수 있습니다. 이용자는 브라우저 설정이나 Google 광고 설정 등을 통해 일부 쿠키 및 광고 개인 최적화 설정을 관리할 수 있습니다.</p></section>
- <section><h2>6. Google 서비스의 데이터 사용</h2><p>Google이 Google 서비스를 사용하는 사이트 또는 앱에서 수집한 정보를 어떻게 사용하는지는 Google의 안내에서 확인할 수 있습니다: <a href="https://policies.google.com/technologies/partner-sites?hl=ko" target="_blank" rel="noreferrer">Google이 Google 서비스를 사용하는 웹사이트 또는 앱의 정보를 사용하는 방법</a>.</p></section>
- <section><h2>7. 해외 이용자 및 동의 관리</h2><p>유럽경제지역(EEA), 영국, 스위스 등 관련 지역에서 Google 광고가 제공되는 경우, Google 정책 및 관련 법령에서 요구하는 범위에 따라 쿠키, 로컬 저장소 및 광고 목적의 개인정보 처리에 대한 고지와 동의 절차가 적용될 수 있습니다. 서비스는 광고가 실제로 활성화되는 경우 Google 인증 CMP 또는 Google의 Privacy &amp; messaging 기능 등 적절한 동의 관리 수단을 설정할 수 있습니다.</p></section>
- <section><h2>8. 정보주체의 권리</h2><p>이용자는 자신의 개인정보에 대한 열람, 정정, 삭제, 처리정지 등을 요청할 수 있습니다. 특정 친구 페이지에 남긴 참여 기록은 <Link to="/delete">참여정보 삭제</Link> 화면에서 본인 확인 후 직접 삭제할 수 있으며, 추가 문의는 <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a>으로 접수할 수 있습니다.</p></section>
- <section><h2>9. 개인정보의 파기</h2><p>삭제 요청 등으로 보유 목적이 없어지면 해당 참여 연결 기록을 삭제합니다. 관계 기록이 더 이상 어떤 페이지에서도 사용되지 않는 경우 관련 관계 결과도 함께 정리하도록 설계되어 있습니다.</p></section>
- <section><h2>10. 안전성 확보조치</h2><p>브라우저가 개인정보 테이블에 직접 접근하지 않도록 서버 API를 통해 처리하고, 데이터베이스 접근 권한을 제한합니다. 삭제용 비밀값은 원문 대신 해시값 형태로 서버에 저장합니다.</p></section>
- <section><h2>11. 아동의 개인정보</h2><p>서비스는 일반 이용자를 대상으로 하며, 만 14세 미만 이용자의 개인정보를 의도적으로 수집하는 것을 목적으로 하지 않습니다. 만 14세 미만 이용자의 개인정보 처리에 별도 법적 절차가 필요한 경우 법정대리인 동의 등 필요한 조치를 마련합니다.</p></section>
- <section><h2>12. 개인정보 관련 문의</h2><p>개인정보 관련 문의 및 삭제 요청: <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></p></section>
- <section><h2>13. 처리방침 변경</h2><p>개인정보 처리 방식, 외부 서비스 또는 광고 기술의 사용 방식이 변경되는 경우 이 페이지의 내용을 갱신하고 중요한 변경사항은 서비스 내에서 알립니다.</p></section>
+ <section><h2>3. 개인정보의 제3자 제공</h2><p>서비스는 이용자의 개인정보를 임의로 판매하지 않습니다. 다만 웹 호스팅, 데이터베이스, 광고 및 사이트 운영 과정에서 외부 서비스 제공자가 각자의 정책과 서비스 설정에 따라 필요한 정보를 처리할 수 있습니다.</p></section>
+ <section><h2>4. 외부 서비스 및 처리업무</h2><p><b>Cloudflare</b> — 웹사이트 호스팅, 콘텐츠 전송, 보안 및 네트워크 처리를 위해 사용합니다.</p><p><b>Supabase</b> — 이용자가 입력한 정보, 인연지도 및 관계 결과의 데이터베이스 저장과 서버 기능 제공을 위해 사용합니다.</p><p><b>카카오 AdFit</b> — 서비스 운영을 위한 온라인 광고를 제공하기 위해 사용할 수 있습니다. 광고 제공 과정에서 쿠키, IP 주소, 브라우저·기기 정보, 방문·이용 기록 등 광고 요청과 관련된 정보가 자동으로 생성되거나 처리될 수 있으며, 광고 제공·성과 측정·서비스 운영 등에 활용될 수 있습니다. 사주 관계 분석을 위해 입력한 닉네임, 생년월일, 출생시간, 양·음력 구분 및 생성된 관계 결과를 광고 맞춤화를 위한 정보로 별도 제공하지 않습니다.</p></section>
+ <section><h2>5. 쿠키 및 유사 기술</h2><p>서비스 또는 외부 서비스 제공자는 서비스 제공, 보안, 광고 제공 및 측정을 위해 쿠키나 유사한 기술을 사용할 수 있습니다. 이용자는 사용하는 웹브라우저의 개인정보 및 쿠키 설정에서 쿠키 저장을 허용하거나 제한할 수 있습니다. 쿠키를 제한하더라도 본 서비스의 기본적인 사주 관계 분석 기능은 이용할 수 있습니다.</p></section>
+ <section><h2>6. 정보주체의 권리</h2><p>이용자는 자신의 개인정보에 대한 열람, 정정, 삭제, 처리정지 등을 요청할 수 있습니다. 특정 친구 페이지에 남긴 참여 기록은 <Link to="/delete">참여정보 삭제</Link> 화면에서 본인 확인 후 직접 삭제할 수 있으며, 추가 문의는 <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a>으로 접수할 수 있습니다.</p></section>
+ <section><h2>7. 개인정보의 파기</h2><p>삭제 요청 등으로 보유 목적이 없어지면 해당 참여 연결 기록을 삭제합니다. 관계 기록이 더 이상 어떤 페이지에서도 사용되지 않는 경우 관련 관계 결과도 함께 정리하도록 설계되어 있습니다.</p></section>
+ <section><h2>8. 안전성 확보조치</h2><p>브라우저가 개인정보 테이블에 직접 접근하지 않도록 서버 API를 통해 처리하고, 데이터베이스 접근 권한을 제한합니다. 삭제용 비밀값은 원문 대신 해시값 형태로 서버에 저장합니다.</p></section>
+ <section><h2>9. 아동의 개인정보</h2><p>서비스는 일반 이용자를 대상으로 하며, 만 14세 미만 이용자의 개인정보를 의도적으로 수집하는 것을 목적으로 하지 않습니다. 만 14세 미만 이용자의 개인정보 처리에 별도 법적 절차가 필요한 경우 법정대리인 동의 등 필요한 조치를 마련합니다.</p></section>
+ <section><h2>10. 개인정보 관련 문의</h2><p>개인정보 관련 문의 및 삭제 요청: <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></p></section>
+ <section><h2>11. 처리방침 변경</h2><p>개인정보 처리 방식, 외부 서비스 또는 광고 기술의 사용 방식이 변경되는 경우 이 페이지의 내용을 갱신하고 중요한 변경사항은 서비스 내에서 알립니다.</p></section>
  </LegalLayout>}
-function Terms(){usePageMeta("이용약관 | 사주로 보는 전생의 인연","전생 인연지도 서비스의 이용 조건과 엔터테인먼트 콘텐츠 성격을 안내합니다.",false);return <LegalLayout title="이용약관" updated="2026.08.15">
+function Terms(){usePageMeta("이용약관 | 사주로 보는 전생의 인연","전생 인연지도 서비스의 이용 조건과 엔터테인먼트 콘텐츠 성격을 안내합니다.",false);return <LegalLayout title="이용약관" updated="2026.09.27">
  <section><h2>1. 서비스의 성격</h2><p>‘사주로 보는 전생의 인연’은 전통 명리 요소를 바탕으로 관계 성향을 계산하여 전생 이야기 형식으로 재해석하는 엔터테인먼트 서비스입니다.</p></section>
  <section><h2>2. 결과에 대한 안내</h2><p>서비스 결과는 재미와 소셜 콘텐츠를 위한 해석이며 실제 전생, 운명, 인간관계의 사실 여부나 미래를 과학적으로 증명하거나 보장하지 않습니다. 중요한 의료·법률·금융·인간관계 의사결정의 근거로 사용해서는 안 됩니다.</p></section>
  <section><h2>3. 이용자의 책임</h2><p>이용자는 본인이 입력할 권한이 있는 정보를 사용해야 하며 타인의 개인정보를 동의 없이 수집하거나 악의적으로 입력해서는 안 됩니다. 모욕, 괴롭힘, 사칭 등 타인의 권리를 침해하는 방식으로 서비스를 이용해서는 안 됩니다.</p></section>
  <section><h2>4. 서비스 변경 및 중단</h2><p>서비스 품질 향상, 안정성 확보 또는 운영상 필요에 따라 기능, 관계 계산식, 화면 및 데이터 구조가 개선될 수 있으며, 필요한 경우 일부 기능이 변경되거나 일시적으로 중단될 수 있습니다.</p></section>
  <section><h2>5. 지식재산권</h2><p>서비스가 제공하는 UI, 문구, 관계 유형 및 자체 제작 콘텐츠에 관한 권리는 법령 또는 별도 약정에 따라 보호됩니다. 이용자가 생성한 공유 이미지는 개인적인 공유 목적으로 사용할 수 있습니다.</p></section>
- <section><h2>6. 면책</h2><p>서비스는 엔터테인먼트 결과의 정확성이나 특정 관계 개선 효과를 보장하지 않습니다. 이용자의 입력 오류, 네트워크 장애, 외부 플랫폼 장애 등 서비스가 합리적으로 통제하기 어려운 사유로 발생한 문제에 대해서는 관련 법령이 허용하는 범위에서 책임이 제한될 수 있습니다.</p></section>
+ <section><h2>6. 광고 및 외부 서비스</h2><p>서비스 운영을 위해 광고 또는 외부 서비스가 표시될 수 있습니다. 광고의 내용과 광고를 통해 연결되는 외부 서비스는 해당 제공자의 책임과 정책에 따라 운영되며, 광고가 서비스의 사주 관계 분석 결과에 영향을 주지는 않습니다.</p></section>
+ <section><h2>7. 면책</h2><p>서비스는 엔터테인먼트 결과의 정확성이나 특정 관계 개선 효과를 보장하지 않습니다. 이용자의 입력 오류, 네트워크 장애, 외부 플랫폼 장애 등 서비스가 합리적으로 통제하기 어려운 사유로 발생한 문제에 대해서는 관련 법령이 허용하는 범위에서 책임이 제한될 수 있습니다.</p></section>
  </LegalLayout>}
 
 function DeleteData(){
