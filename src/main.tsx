@@ -13,6 +13,15 @@ const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST'
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
+const ADFIT_SCRIPT='//t1.daumcdn.net/kas/static/ba.min.js';
+function AdFitBanner({unit,label='광고'}:{unit:string;label?:string}){
+ React.useEffect(()=>{
+   const existing=document.querySelector(`script[src="${ADFIT_SCRIPT}"]`);
+   if(existing){ try{(window as any).adfit?.render?.()}catch{}; return; }
+   const script=document.createElement('script'); script.src=ADFIT_SCRIPT; script.async=true; document.body.appendChild(script);
+ },[unit]);
+ return <aside className="adfit-wrap" aria-label={label}><span className="adfit-label">{label}</span><ins className="kakao_ad_area" style={{display:'none'}} data-ad-unit={unit} data-ad-width="320" data-ad-height="100"/></aside>;
+}
 const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link><nav className="top-nav"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/contents/">읽을거리</Link><Link to="/faq">FAQ</Link></nav></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link><a href="/contents/">읽을거리</a><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
 
 const relationIcon=(code?:string,label?:string)=>{
@@ -77,6 +86,7 @@ function Home(){usePageMeta("사주로 보는 전생의 인연 | 인연지도와
   <p>그다음 복잡한 관계 신호를 왕과 충신, 스승과 제자, 평생의 벗, 숙명의 라이벌 같은 이야기 유형으로 바꿉니다. 전생이라는 표현은 실제 과거 생을 증명하기 위한 주장이 아니라, 두 사람 사이의 관계 특징을 기억하고 대화하기 쉽게 만드는 서사 장치입니다. 같은 두 사람이 같은 조건으로 참여하면 핵심 관계가 무작위로 바뀌지 않도록 일관된 계산 규칙을 사용합니다.</p>
   <p>친구가 링크를 통해 참여할수록 한 명씩 따로 보는 결과가 아니라 하나의 인연지도가 만들어집니다. 지도와 랭킹은 누가 더 좋은 사람인지 평가하기 위한 기능이 아니라, 페이지 주인과 각 참여자 사이에서 어떤 관계 신호가 상대적으로 강하게 나타났는지 비교해서 보는 놀이형 시각화입니다. 결과를 보기 전에 개념이 궁금하다면 아래 읽을거리에서 오행, 합과 충, 원진, 관계 점수의 의미를 먼저 살펴볼 수 있습니다.</p>
 </section>
+<AdFitBanner unit="DAN-Uaik8cdnOSddKS9L"/>
 <section className="home-article-section">
   <div className="section-title"><span>📚</span><div><small>EDITORIAL</small><h2>처음 읽기 좋은 사주 관계 글</h2></div></div>
   <div className="home-article-grid">

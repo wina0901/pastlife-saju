@@ -1,18 +1,20 @@
-pastlife.site 최종 청소 패치
+pastlife.site Kakao AdFit 적용 패치 — 2026-09-27
 
-적용 파일
-- src/styles.css : 사용하지 않는 과거 광고/보상형 광고 CSS 제거
-- public/contents/*.html 8개 : 짧았던 핵심 읽을거리 보강
+GitHub 저장소를 삭제하지 마세요.
+이 ZIP의 파일/폴더를 저장소 최상단에 그대로 업로드하여 덮어쓰면 됩니다.
 
-적용 방법 (GitHub 웹)
-1. ZIP 압축을 풉니다.
-2. pastlife-saju 저장소 메인 화면에서 Add file > Upload files를 누릅니다.
-3. 압축을 푼 폴더 안의 src, public 폴더를 그대로 드래그합니다.
-4. 같은 경로의 기존 파일은 덮어써지도록 업로드합니다.
-5. Commit changes를 누릅니다.
-6. Cloudflare Pages의 Production 배포가 초록색 체크인지 확인합니다.
+적용 광고단위
+- 홈: DAN-Uaik8cdnOSddKS9L (320x100)
+- 읽을거리 목록: DAN-hOQrOps3VvaUNO4v (320x100)
+- 읽을거리 본문 중간: DAN-j7J6iXXDQIDKEsIN (320x100)
+- 읽을거리 본문 하단: DAN-RpuT6xVz5EQYOZqw (320x100)
 
-주의
-- 저장소 전체를 삭제하지 마세요.
-- Supabase/functions/package.json/robots/sitemap은 이번 패치에서 변경하지 않습니다.
-- 실제 Kakao AdFit 광고단위 코드는 아직 넣지 않았습니다.
+광고 미적용
+- /create
+- /n/:slug
+- /result/:id
+- /saju/:id
+- 로딩/오류/삭제 등 기능 화면
+
+업로드 후 Cloudflare Pages Production 배포가 성공(초록 체크)인지 확인하세요.
+AdFit 신규 매체/광고단위는 심사·광고 수급 상태에 따라 즉시 실광고가 보이지 않을 수 있습니다.

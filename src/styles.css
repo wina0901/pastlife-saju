@@ -1536,3 +1536,9 @@ html{background:var(--page)}body{font-family:"Noto Sans KR","Apple SD Gothic Neo
 @media(max-width:720px){.shell{width:min(100% - 28px,920px)}.home-info-grid{border-bottom:0}.home-info-card{padding:22px 0}.home-info-card+.home-info-card{border-left:0!important;border-top:1px solid var(--line)!important}.result h1{font-size:34px!important}.roles>div{padding:8px!important}.related-reading{margin:30px 0}.top-nav{display:none}.story p{font-size:15px!important}.deep-saju-hero{margin-top:28px!important}}
 @media(max-width:420px){.shell{width:calc(100% - 24px)}.result h1{font-size:31px!important}.pair{font-size:16px!important}.roles{gap:0!important}.roles strong{font-size:14px}.home-article-grid a{padding:17px!important}.related-reading h2{font-size:20px}.radial-card{padding-left:12px!important;padding-right:12px!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.connection-flow{animation:none!important}.mine-node{animation:none!important}}
+
+/* Kakao AdFit — content-safe 320x100 banner */
+.adfit-wrap{width:100%;min-height:0;margin:32px auto;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.adfit-label{display:block;margin:0 0 7px;font-size:10px;line-height:1;letter-spacing:.08em;color:#8b8177;text-align:center}
+.adfit-wrap .kakao_ad_area{max-width:320px}
+@media(max-width:359px){.adfit-wrap{transform-origin:top center;overflow:visible}}
