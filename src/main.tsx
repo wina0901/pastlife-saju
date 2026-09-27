@@ -13,7 +13,7 @@ const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST'
 
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
-const ADFIT_SCRIPT='//t1.daumcdn.net/kas/static/ba.min.js';
+const ADFIT_SCRIPT='//t1.kakaocdn.net/kas/static/ba.min.js';
 function AdFitBanner({unit,label='광고'}:{unit:string;label?:string}){
  React.useEffect(()=>{
    const existing=document.querySelector(`script[src="${ADFIT_SCRIPT}"]`);
