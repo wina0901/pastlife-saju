@@ -1642,3 +1642,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sa
 .loading-card{background:#fbf0e2!important;color:var(--body)!important;border-color:#dfc9af!important}.analysis-orb{background:#ead8c3!important;border-color:#c7a887!important;box-shadow:none!important}
 .admin-page{max-width:980px;margin:0 auto}.admin-toolbar{display:flex;gap:10px;margin:22px 0}.admin-toolbar input{flex:1}.admin-toolbar select{min-width:150px}.admin-row-actions{margin-top:12px}.admin-row-actions button,.admin-participant button{border:1px solid var(--line);background:#fffaf4;color:var(--ink);border-radius:10px;padding:8px 12px}.admin-participant{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;gap:14px!important;align-items:center}.admin-participant>div:last-child{display:flex;gap:8px;align-items:center}.admin-participant a{color:var(--accent);font-weight:800;text-decoration:none}.admin-danger{margin-top:18px;padding-top:14px;border-top:1px solid #ead8d2}.admin-danger button{border:0;background:transparent;color:var(--danger);font-weight:800;padding:8px 0}.admin-error{margin:16px 0;padding:12px 14px;background:#fff0ed;color:#7c3028;border-left:3px solid var(--danger)}
 @media(max-width:520px){.count{padding:16px}.count strong{font-size:24px!important}.special-grid{grid-template-columns:1fr}.radial-node{min-width:58px!important;min-height:58px!important;max-width:72px!important;padding:6px!important}.radial-node b{max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.radial-node .map-role{max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hero-roles{grid-template-columns:1fr}.admin-toolbar{flex-direction:column}.admin-toolbar select{width:100%}.admin-participant{grid-template-columns:1fr auto!important}.admin-participant>div:last-child{grid-column:1/-1}.become-owner-card{align-items:flex-start;flex-direction:column}}
+
+/* 2026-09-28 spacing, readability and expanded story */
+.result .deep-unlock-card{padding:30px 24px!important}
+.result .deep-unlock-card>div{display:grid;gap:10px;margin-bottom:20px}
+.result .deep-unlock-card small,.result .deep-unlock-card p,.result .related-reading>p,.result .related-reading-links span,.result .viral-result-head>p,.result .become-owner-card small,.deep-saju-page .muted,.deep-saju-page .deep-story-note,.deep-saju-page .deep-explain,.deep-saju-page .deep-advice p,.deep-saju-page .element-detail p,.deep-saju-page .pillar-grid span{color:var(--ink)!important;opacity:.9}
+.result .deep-unlock-card h3,.result .related-reading h2,.result .viral-result-head h2,.result .become-owner-card h3{color:var(--ink)!important}
+.result .deep-unlock-card .primary{margin-top:0!important}
+.result .related-reading{padding:34px 2px!important}
+.result .viral-result-section{padding-bottom:8px!important}
+.result .viral-result-head{display:grid;gap:10px;margin-bottom:22px}
+.result .share-btn,.result .story-share{margin-top:12px!important}
+.result .become-owner-card{padding:26px 0!important}
+.result-long-story{display:grid;gap:16px;margin-top:18px}
+.result-long-story p{margin:0!important;color:var(--ink)!important;font-size:15px!important;line-height:1.95!important}
+.scores .score-head,.scores .score-head b,.scores .score-row>small,.scores .score-row small{color:var(--ink)!important;opacity:1!important}
+.scores .score-head{font-weight:800!important}
+.scores .score-row>small,.scores .score-row small{font-size:14px!important;line-height:1.65!important}
+.scores .score-row{padding:6px 0 12px!important}
+.deep-saju-page>.card,.deep-saju-page .element-detail{color:var(--ink)!important}
+.adfit-wrap{margin:34px auto!important;clear:both}
+@media(max-width:520px){.result .deep-unlock-card{padding:26px 20px!important}.result .deep-unlock-card>div{margin-bottom:18px}.result .related-reading{padding:30px 0!important}.result .become-owner-card{display:grid!important;grid-template-columns:1fr!important;gap:16px!important;padding:24px 0!important}.result .become-owner-card .secondary{margin-top:0!important}.result-long-story p{font-size:15px!important;line-height:1.9!important}}
