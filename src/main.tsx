@@ -14,7 +14,18 @@ const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST'
 type PersonInput={nickname:string;birthDate:string;birthTime:string;calendarType:'solar'|'lunar'};
 const toApi=(v:PersonInput)=>({nickname:v.nickname,birth_date:v.birthDate,birth_time:v.birthTime||null,calendar_type:v.calendarType});
 const ADFIT_SCRIPT='//t1.kakaocdn.net/kas/static/ba.min.js';
-const ADFIT_UNITS={home:'DAN-Uaik8cdnOSddKS9L',content:'DAN-hOQrOps3VvaUNO4v',middle:'DAN-j7J6iXXDQIDKEsIN',bottom:'DAN-RpuT6xVz5EQYOZqw'} as const;
+const ADFIT_UNITS={
+ home:'DAN-Uaik8cdnOSddKS9L',
+ content:'DAN-hOQrOps3VvaUNO4v',
+ articleMiddle:'DAN-j7J6iXXDQIDKEsIN',
+ articleBottom:'DAN-RpuT6xVz5EQYOZqw',
+ map:'DAN-QzREY9njohhyglcM',
+ resultMiddle:'DAN-YOIDPXsDLiI69AMk',
+ resultBottom:'DAN-wIII61jQ1VaTcty',
+ sajuMiddle:'DAN-GS9yy2yJRjkBtQCa',
+ sajuBottom:'DAN-9qwM8f2yMGmTNZSr',
+ info:'DAN-57fhPWx7vW1RfBbK'
+} as const;
 function AdFitBanner({unit,label='광고'}:{unit:string;label?:string}){
  React.useEffect(()=>{
    const existing=document.querySelector(`script[src="${ADFIT_SCRIPT}"]`);
@@ -79,7 +90,17 @@ function Home(){usePageMeta("사주로 보는 전생의 인연 | 인연지도와
   <section className="home-info-card"><span>02</span><h2>친구에게 공유하기</h2><p>만들어진 링크를 친구에게 보내 참여를 받습니다.</p></section>
   <section className="home-info-card"><span>03</span><h2>인연 확인하기</h2><p>친구가 참여할수록 나를 중심으로 지도가 채워집니다.</p></section>
 </div>
-<section className="home-demo" aria-label="결과 예시"><p className="eyebrow">결과 예시</p><div><small>조선 후기</small><h2>목숨을 맡긴 전우</h2><p>“위기의 순간마다 서로의 등을 맡겼던 사이”</p><strong>인연의 깊이 91</strong></div></section>
+<section className="home-demo" aria-label="결과 예시">
+  <div className="home-demo-head"><p className="eyebrow">결과 예시</p><small>조선 후기</small></div>
+  <h2>목숨을 맡긴 전우</h2>
+  <div className="home-role-diagram" aria-label="선봉장과 호위병의 관계">
+    <div><small>나의 역할</small><strong>선봉장</strong></div>
+    <span className="home-role-line" aria-hidden="true"><i/><em>전우</em></span>
+    <div><small>상대의 역할</small><strong>호위병</strong></div>
+  </div>
+  <p className="home-demo-quote">“위기의 순간마다 서로의 등을 맡겼던 사이”</p>
+  <div className="home-demo-score"><span>인연의 깊이</span><strong>91</strong></div>
+</section>
 <AdFitBanner unit={ADFIT_UNITS.home}/>
 <section className="home-article-section"><div className="section-title"><div><small>읽을거리</small><h2>결과를 더 재미있게 읽는 법</h2></div></div><div className="home-article-grid">
 <a href="/contents/compatibility-vs-relationship.html"><b>사주 궁합과 인연 해석의 차이</b><span>점수보다 관계의 방향과 패턴을 보는 이유</span></a>
@@ -99,12 +120,12 @@ function usePageMeta(title:string,description?:string,noindex=false){
  },[title,description,noindex]);
 }
 
-function Create(){usePageMeta('내 전생 인연지도 만들기 | 사주로 보는 전생의 인연','내 사주 정보를 입력해 친구들과 공유할 전생 인연지도를 만듭니다.',true);const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)throw new Error(d.error||'지도를 만들지 못했습니다. 잠시 후 다시 시도해주세요.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);track('page_create',{page_slug:d.slug});nav(`/n/${d.slug}`)};return <Shell><section className="create-page"><p className="eyebrow">내 인연지도 만들기</p><h1>내 전생 인연지도 만들기</h1><p className="muted">먼저 나를 등록해주세요. 친구들이 참여하면 나를 중심으로 인연지도가 만들어집니다.</p><PersonForm buttonText="내 인연지도 만들기" busyText="인연지도를 만들고 있어요…" onSubmit={submit}/><AdFitBanner unit={ADFIT_UNITS.middle}/></section></Shell>}
+function Create(){usePageMeta('내 전생 인연지도 만들기 | 사주로 보는 전생의 인연','내 사주 정보를 입력해 친구들과 공유할 전생 인연지도를 만듭니다.',true);const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)throw new Error(d.error||'지도를 만들지 못했습니다. 잠시 후 다시 시도해주세요.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);track('page_create',{page_slug:d.slug});nav(`/n/${d.slug}`)};return <Shell><section className="create-page"><p className="eyebrow">내 인연지도 만들기</p><h1>내 전생 인연지도 만들기</h1><p className="muted">먼저 나를 등록해주세요. 친구들이 참여하면 나를 중심으로 인연지도가 만들어집니다.</p><PersonForm buttonText="내 인연지도 만들기" busyText="인연지도를 만들고 있어요…" onSubmit={submit}/><AdFitBanner unit={ADFIT_UNITS.info}/></section></Shell>}
 
 function HighlightGrid({items}:{items:any[];count?:number}){
  const hs=buildHighlights(items);
  if(hs.length===0)return null;
- return <section className="special-relations"><div className="special-head"><p className="eyebrow">특별한 인연</p><h2>지도에서 눈에 띄는 관계</h2><p>현재 참여한 인연들의 관계 지표를 비교한 결과입니다.</p></div><div className="special-grid">{hs.map(h=><article className="special-item" key={h.title}><small>{h.title}</small><b>{h.item.nickname}</b><span>{h.item.relationship_type}</span><div><em>{h.description}</em><strong>{h.score}</strong></div></article>)}</div></section>
+ return <section className="special-relations"><div className="special-head"><p className="eyebrow">특별한 인연</p><h2>지도에서 눈에 띄는 관계</h2><p>현재 참여한 인연들의 관계 지표를 비교한 결과입니다.</p></div><div className="special-list">{hs.map(h=><article className="special-row" key={h.title}><div><small>{h.title}</small><b>{h.item.nickname}<span> · {h.item.relationship_type}</span></b></div><strong>{h.score}</strong></article>)}</div></section>
 }
 
 function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:string;items:any[];clickable?:boolean;mineId?:string|null;ownerElement?:string|null}){
@@ -114,38 +135,26 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
  const maxVisible=16;
  const visible=(()=>{const top=ranked.slice(0,maxVisible);if(!mineId||top.some((x:any)=>x.id===mineId))return top;const mine=ranked.find((x:any)=>x.id===mineId);return mine?[...ranked.slice(0,maxVisible-1),mine]:top})();
 
- // 점수를 중심으로부터의 거리로 직접 변환합니다.
- // 100점 = 중앙 인물 원 바로 바깥
- // 85점  = 첫 번째 기준 궤도
- // 70점  = 두 번째 기준 궤도
- // 55점  = 세 번째 기준 궤도
- // 중간 점수는 선형 보간되어 궤도 사이에 배치됩니다.
- const radiusForScore=(raw:number)=>{
-   const score=Math.max(40,Math.min(100,Number(raw)||60));
-   const centerEdge=11;  // 100점 위치
-   const orbit85=22;     // 85점 라인
-   const orbit70=34;     // 70점 라인
-   const orbit55=46;     // 55점 라인
-   if(score>=85) return centerEdge+(100-score)/(100-85)*(orbit85-centerEdge);
-   if(score>=70) return orbit85+(85-score)/(85-70)*(orbit70-orbit85);
-   if(score>=55) return orbit70+(70-score)/(70-55)*(orbit55-orbit70);
-   return Math.min(48,orbit55+(55-score)/(55-40)*2);
- };
-
+ // 점수 절대값 대신 순위층으로 분리합니다. 현재 점수 분포가 80점대에 몰려도 노드가 한곳에 겹치지 않습니다.
+ const layerOf=(index:number)=>index<4?0:index<10?1:2;
+ const layerStart=[0,4,10];
+ const layerCount=[Math.min(4,visible.length),Math.min(6,Math.max(0,visible.length-4)),Math.min(6,Math.max(0,visible.length-10))];
+ const layerRadius=[22,32,42];
  const nodes=visible.map((item:any,index:number)=>{
    const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
-   const radius=radiusForScore(score);
-   // 같은/비슷한 점수끼리 겹치지 않도록 각도만 분산합니다.
-   const angle=(index/Math.max(1,visible.length))*Math.PI*2-(Math.PI/2)+(score%7)*0.035;
+   const layer=layerOf(index);
+   const within=index-layerStart[layer];
+   const count=Math.max(1,layerCount[layer]);
+   const angleOffset=[-Math.PI/2,-Math.PI/2+Math.PI/6,-Math.PI/2][layer];
+   const angle=angleOffset+(within/count)*Math.PI*2;
+   const scoreNudge=((score-85)/15)*1.2;
+   const radius=Math.max(layerRadius[layer]-1.4,Math.min(layerRadius[layer]+1.4,layerRadius[layer]-scoreNudge));
    return {...item,x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius,score,rank:rankById.get(item.id)||null};
  });
 
  const renderNode=(n:any)=>{
    const isMine=n.id===mineId;
-   const inner=<>
-     <span className="map-role">{n.participant_role||n.relationship_type||'인연'}</span>
-     <b>{isMine?'나':n.nickname}</b>
-   </>;
+   const inner=<><span className="map-role">{n.participant_role||n.relationship_type||'인연'}</span><b>{isMine?'나':n.nickname}</b>{isMine&&<em className="map-mine-tag">나</em>}</>;
    return clickable
      ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.participant_role||n.relationship_type||'인연'}`}>{inner}</Link>
      : <div key={n.id} className={`radial-node visitor-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${n.participant_role||n.relationship_type||'인연'}`:`${n.nickname} · ${n.participant_role||n.relationship_type||'인연'}`}>{inner}</div>;
@@ -155,44 +164,26 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
    <div className="radial-title">
      <p className="eyebrow">전생 인연지도</p>
      <h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2>
-     <p>가까울수록 인연이 깊고, 각 사람의 원에는 나와의 전생 역할이 표시됩니다.</p>
+     <p>중심에 가까운 층일수록 인연의 깊이 순위가 높습니다. 원 안에는 나와의 전생 역할이 표시됩니다.</p>
    </div>
    <div className="radial-map">
-     <div className="orbit score-orbit orbit-85"/>
-     <div className="orbit score-orbit orbit-70"/>
-     <div className="orbit score-orbit orbit-55"/>
+     <div className="orbit rank-orbit rank-orbit-inner"/>
+     <div className="orbit rank-orbit rank-orbit-middle"/>
+     <div className="orbit rank-orbit rank-orbit-outer"/>
      <svg className="connection-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-       <defs>
-         <filter id="electricGlow" x="-50%" y="-50%" width="200%" height="200%">
-           <feGaussianBlur stdDeviation="0.7" result="blur"/>
-           <feMerge>
-             <feMergeNode in="blur"/>
-             <feMergeNode in="SourceGraphic"/>
-           </feMerge>
-         </filter>
-       </defs>
-       {nodes.map((n:any,index:number)=>(
-         <g key={`line-${n.id}`} className="electric-connection">
-           <line className="connection-base" x1="50" y1="50" x2={n.x} y2={n.y}/>
-           <line
-             className="connection-flow"
-             x1="50" y1="50" x2={n.x} y2={n.y}
-             style={{animationDelay:`-${(index%6)*0.28}s`}}
-           />
-         </g>
-       ))}
+       {nodes.map((n:any,index:number)=><g key={`line-${n.id}`} className="map-connection"><line className="connection-base" x1="50" y1="50" x2={n.x} y2={n.y}/><line className="connection-flow" x1="50" y1="50" x2={n.x} y2={n.y} style={{animationDelay:`-${(index%6)*0.28}s`}}/></g>)}
      </svg>
-     <div className="center-person"><b>{owner}</b><small>나</small></div>
+     <div className="center-person"><b>{owner}</b><small>{clickable?'나':'지도 주인'}</small></div>
      {nodes.map(renderNode)}
    </div>
-   {safeItems.length>maxVisible&&<p className="radial-more">+ {safeItems.length-maxVisible}명의 인연이 더 있습니다.</p>}
+   {safeItems.length>maxVisible&&<p className="radial-more">상위 인연을 중심으로 표시 중 · {safeItems.length-maxVisible}명 더 있음</p>}
  </div>
 }
 
 function RelationshipRanking({items,mineId,ownerMode=false}:{items:any[];mineId?:string|null;ownerMode?:boolean}){
  const ranked=[...(items||[])].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
  if(!ranked.length)return null;
- return <section className="ranking-card ranking-list-card"><div className="ranking-heading"><p className="eyebrow">인연의 깊이 순</p><h3>전생 인연 랭킹</h3></div><div className="clean-ranking-list">{ranked.map((x:any,index:number)=>{const isMine=x.id===mineId;const row=<><span className="clean-rank-number">{index+1}</span><div className="clean-rank-main"><div className="clean-rank-name"><b>{isMine?'나':x.nickname}</b>{isMine&&<em>나</em>}</div><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></>;return ownerMode?<Link key={x.id} className={`clean-rank-row ${isMine?'mine-row':''}`} to={`/result/${x.id}`}>{row}</Link>:<div key={x.id} className={`clean-rank-row ${isMine?'mine-row':''}`}>{row}</div>})}</div>{!ownerMode&&<p className="ranking-private-note">다른 참여자의 상세 관계 정보는 공개되지 않습니다.</p>}</section>
+ return <section className="ranking-card ranking-list-card"><div className="ranking-heading"><p className="eyebrow">인연의 깊이 순</p><h3>전생 인연 랭킹</h3></div><div className="clean-ranking-list">{ranked.map((x:any,index:number)=>{const isMine=x.id===mineId;const row=<><span className={`clean-rank-number ${index<3?`rank-top-${index+1}`:''}`}>{index+1}</span><div className="clean-rank-main"><div className="clean-rank-name"><b>{isMine?'나':x.nickname}</b>{isMine&&<em>나</em>}</div><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}<small>점</small></strong></>;return ownerMode?<Link key={x.id} className={`clean-rank-row ${isMine?'mine-row':''}`} to={`/result/${x.id}`}>{row}</Link>:<div key={x.id} className={`clean-rank-row ${isMine?'mine-row':''}`}>{row}</div>})}</div>{!ownerMode&&<p className="ranking-private-note">다른 참여자의 상세 관계 정보는 공개되지 않습니다.</p>}</section>
 }
 
 function rankInfo(items:any[],mineId?:string|null){
@@ -225,7 +216,7 @@ function Page(){usePageMeta('전생 인연지도 | 사주로 보는 전생의 �
  const share=async()=>{track('share_click',{page_slug:slug,metadata:{source:'map'}});const url=`${location.origin}/n/${slug}`;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
  const publicMap=data.relationships?.length>0?<RadialMap owner={data.owner_nickname} ownerElement={data.owner_element} items={data.relationships} clickable={ownerMode} mineId={mineId}/>:<div className="empty-public-map"><b>아직 등록된 인연이 없어요</b><p>{ownerMode?'친구에게 이 지도를 보내 첫 번째 전생 인연을 찾아보세요.':`첫 번째로 참여해서 ${data.owner_nickname}의 인연지도를 시작해보세요.`}</p>{ownerMode&&<button className="primary" onClick={share}>친구에게 지도 공유하기</button>}</div>;
  return <Shell><section><p className="eyebrow">전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count"><span>지금까지 참여한 인연</span><strong>{data.count}명</strong></div>
- {ownerMode?<>{publicMap}<RelationshipRanking items={data.relationships} mineId={mineId} ownerMode={true}/>{data.relationships.length>0&&<><div className="relation-list card"><div className="section-title"><span>🗂️</span><div><small>발견된 인연</small><h3>전체 인연 보기</h3></div></div>{data.relationships.map((x:any)=><Link className="relation-row" to={`/result/${x.id}`} key={x.id}><i>{relationIcon(x.type_code,x.relationship_type)}</i><div><b>{x.nickname}</b><span>{x.relationship_type}</span></div><strong>{scoreOf(x,'인연의깊이')}</strong></Link>)}</div><HighlightGrid items={data.relationships} count={data.count}/></>}{data.relationships.length>0&&<><button className="primary" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 인연지도가 더 풍성해집니다.</p></>}</>:
+ {ownerMode?<>{publicMap}<RelationshipRanking items={data.relationships} mineId={mineId} ownerMode={true}/>{data.relationships.length>0&&<HighlightGrid items={data.relationships} count={data.count}/>} {data.relationships.length>0&&<><button className="primary map-share-button" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 인연지도가 더 풍성해집니다.</p></>}</>:
  mine?<><section className="join-reveal">
    <div className="join-reveal-hero card">
      <div className="join-check">✓</div>
@@ -266,7 +257,7 @@ function Page(){usePageMeta('전생 인연지도 | 사주로 보는 전생의 �
   <HighlightGrid items={data.relationships} count={data.count}/>
 </section>
 </>}
- <AdFitBanner unit={ADFIT_UNITS.middle}/>
+ <AdFitBanner unit={ADFIT_UNITS.map}/>
  </section></Shell>}
 function ScoreBars({scores}:{scores:Record<string,number>}){const help=(k:string)=>k==='충돌'?'높을수록 서로 부딪히거나 강하게 자극하기 쉬워요.':k==='질긴인연'?'높을수록 쉽게 잊히지 않는 연결이 강해요.':k==='서로에게주는영향'?'높을수록 서로에게 미치는 영향이 커요.':k==='신뢰'?'높을수록 믿고 의지하는 흐름이 강해요.':'높을수록 두 사람 사이의 연결이 깊게 나타나요.';return <section className="scores"><div className="score-title"><p className="eyebrow">관계 지표</p><h3>두 사람 사이에 남은 흔적</h3></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div><small>{help(k)}</small></div>})}</section>}
 
@@ -340,40 +331,13 @@ const vectorLabel=(key:string)=>({
 } as Record<string,string>)[key]||key;
 
 
-const deepPastLifeStory=(r:any,b:any)=>{
- const owner=r?.ownerNickname||'두 사람 중 한 사람';
- const participant=r?.participantNickname||'다른 한 사람';
- const label=r?.label||'깊은 인연';
- const factors=Array.isArray(b?.key_factors)?b.key_factors:[];
- const vector=b?.vector||{};
- const affinity=Number(vector.affinity||0);
- const trust=Number(vector.trust||0);
- const conflict=Number(vector.conflict||0);
- const attachment=Number(vector.attachment||0);
- const romance=Number(vector.romance||0);
- const rivalry=Number(vector.rivalry||0);
-
- let opening=`전생에서 ${owner}와 ${participant}의 관계는 ‘${label}’이라는 한 단어만으로 끝나는 인연은 아니었던 것으로 해석할 수 있어요. `;
- if(affinity>=70||attachment>=70) opening+=`두 사람은 처음부터 스쳐 지나가는 사이보다는, 오랜 시간 같은 공간과 사건을 공유하며 서로의 삶에 깊숙이 관여했던 모습에 가깝습니다. `;
- else opening+=`처음에는 특별할 것 없는 만남이었지만, 함께 겪은 사건과 선택이 쌓이면서 서로에게 의미가 커진 관계로 볼 수 있습니다. `;
-
- let middle='';
- if(trust>=65) middle+=`${owner}에게 ${participant}는 중요한 순간에 등을 맡길 수 있는 사람이었고, ${participant} 역시 ${owner}의 판단이나 존재를 쉽게 외면하지 못했을 가능성이 큽니다. `;
- if(romance>=65) middle+=`그 과정에는 단순한 의무나 역할만으로 설명하기 어려운 강한 감정적 끌림도 섞여 있었던 것으로 읽힙니다. 서로를 의식하면서도 당시의 신분이나 책임 때문에 마음을 그대로 표현하지 못했을 수도 있어요. `;
- if(rivalry>=60) middle+=`동시에 두 사람은 서로를 자극하는 경쟁자이기도 했습니다. 상대의 능력을 인정하기 때문에 더 의식했고, 가까운 만큼 비교와 긴장도 쉽게 생겼던 관계였을 수 있습니다. `;
- if(conflict>=60) middle+=`특히 관계가 깊어질수록 의견과 선택이 충돌하는 순간도 적지 않았던 것으로 보입니다. 중요한 갈림길에서 서로 다른 선택을 하거나, 한쪽의 결정이 다른 한쪽에게 오래 남는 상처가 되었을 가능성도 있습니다. `;
- if(attachment>=65) middle+=`그럼에도 쉽게 관계를 끊지 못했다는 점이 이 인연의 특징입니다. 멀어졌다가도 다시 얽히고, 끝났다고 생각한 뒤에도 서로의 선택에 영향을 주는 질긴 인연에 가까웠습니다. `;
-
- let climax=`이 관계의 핵심은 누가 더 좋은 사람이었는지를 가리는 데 있지 않습니다. ${owner}와 ${participant}는 서로에게 하나의 ‘사건’처럼 남은 사람에 가깝습니다. `;
- if(factors.length) climax+=`사주 관계에서 ${factors.slice(0,3).join(', ')} 같은 요소가 함께 잡힌다는 점도, 편안함 하나만으로 이어진 관계라기보다 서로의 삶의 방향을 움직이게 했던 인연이라는 해석을 더해줍니다. `;
- climax+=`그래서 전생의 관계가 끝난 뒤에도 미처 다 하지 못한 말, 갚지 못한 마음, 확인하지 못한 감정 같은 여운이 남았다는 이야기로 풀어볼 수 있습니다. `;
-
- let present=`현생에서 두 사람이 다시 만났다는 설정으로 본다면, 처음부터 이상하게 편하거나 반대로 별 이유 없이 신경 쓰이는 느낌으로 나타날 수 있습니다. `;
- if(conflict>=60) present+=`가까워질수록 서로의 차이가 선명해질 수 있지만, 그 충돌 자체가 두 사람이 서로에게 배우는 지점이 될 수 있습니다. `;
- else present+=`서로에게 자연스럽게 마음을 열거나, 짧은 시간에도 오래 알고 지낸 듯한 친숙함을 느끼기 쉬운 조합으로 볼 수 있습니다. `;
- present+=`전생의 역할을 그대로 반복해야 한다는 뜻보다는, 과거의 관계에서 남았다고 상상할 수 있는 감정과 과제를 이번에는 조금 다른 방식으로 풀어가는 인연이라고 보면 가장 재미있습니다.`;
-
- return {opening,middle,climax,present};
+const storyParagraphs=(story?:string|null)=>{
+ const clean=String(story||'').replace(/\s+/g,' ').trim();
+ if(!clean)return [];
+ const sentences=clean.match(/[^.!?！？。]+[.!?！？。]?/g)?.map(x=>x.trim()).filter(Boolean)||[clean];
+ const paragraphs:string[]=[];
+ for(let i=0;i<sentences.length;i+=2) paragraphs.push(sentences.slice(i,i+2).join(' '));
+ return paragraphs;
 };
 
 type EditorialLink={href:string;title:string;description:string};
@@ -452,18 +416,13 @@ function DetailedSaju(){usePageMeta('사주 관계 심층 해석 | 사주로 보
      <div><small>핵심 전생 관계</small><h2>{r.label}</h2><p>“{r.oneLiner}”</p></div>
    </div>
 
-   {(()=>{const story=deepPastLifeStory(r,b);return <div className="card deep-pastlife-story">
+   <div className="card deep-pastlife-story">
      <div className="section-title"><div><small>전생 관계 이야기</small><h3>두 사람은 어떤 인연이었을까요?</h3></div></div>
-     <div className="deep-story-body">
-       <p>{story.opening}</p>
-       {story.middle&&<p>{story.middle}</p>}
-       <p>{story.climax}</p>
-       <div className="deep-story-present"><b>그리고 현생에서는</b><p>{story.present}</p></div>
-     </div>
+     <div className="deep-story-body">{storyParagraphs(r.story||r.oneLiner).map((paragraph:string,index:number)=><p key={index}>{paragraph}</p>)}</div>
      <p className="deep-story-note">전통 명리 요소를 바탕으로 구성한 엔터테인먼트용 전생 스토리 해석입니다.</p>
-   </div>})()}
+   </div>
 
-   <AdFitBanner unit={ADFIT_UNITS.middle}/>
+   <AdFitBanner unit={ADFIT_UNITS.sajuMiddle}/>
 
    <div className="element-pair-grid">
      <div className="element-detail card">
@@ -513,7 +472,7 @@ function DetailedSaju(){usePageMeta('사주 관계 심층 해석 | 사주로 보
      <p>점수가 높은 요소는 두 사람이 자연스럽게 반복하기 쉬운 관계 패턴이고, 충돌이 높은 요소는 서로 다름을 강하게 느끼기 쉬운 부분입니다. 좋은 관계와 나쁜 관계를 판정하기보다, “왜 이 사람과 이런 분위기가 생기는지”를 보는 재미로 활용해보세요.</p>
    </div>
 
-   <AdFitBanner unit={ADFIT_UNITS.bottom}/>
+   <AdFitBanner unit={ADFIT_UNITS.sajuBottom}/>
    <RelatedReading relationship={r}/>
    <Link className="secondary link" to={`/result/${id}`}>← 기본 관계 결과로 돌아가기</Link>
  </section></Shell>
@@ -524,13 +483,13 @@ function Result(){usePageMeta('전생 관계 결과 | 사주로 보는 전생의
  const share=async()=>{track('share_click',{page_slug:r.pageSlug,relationship_id:id,metadata:{source:'result'}});const url=location.href;const text=`${r.ownerNickname} × ${r.participantNickname}\n${icon} ${r.label}\n“${r.oneLiner}”`;if(navigator.share){try{await navigator.share({title:'사주로 보는 전생의 인연',text,url});return}catch{}}await navigator.clipboard.writeText(`${text}\n${url}`);alert('결과와 링크를 복사했습니다.');};
  const storyShare=async()=>{track('story_share',{page_slug:r.pageSlug,relationship_id:id});setMaking(true);try{await shareStoryCard(r)}finally{setMaking(false)}};
  return <Shell><section className="result"><header className="result-hero"><p className="eyebrow">{r.era||'전생 기록'}</p><div className="result-icon" aria-hidden="true">{icon}</div><h1>{r.label}</h1><p className="pair">{r.ownerNickname} <span>×</span> {r.participantNickname}</p><p className="result-quote">“{r.oneLiner}”</p><div className="hero-roles"><div><small>{r.ownerNickname}</small><strong>{r.ownerRole}</strong></div><div><small>{r.participantNickname}</small><strong>{r.participantRole}</strong></div></div></header>
- <section className="story result-section"><p className="eyebrow">전생 기록</p><h2>두 사람의 이야기</h2>{(()=>{const story=deepPastLifeStory(r,basis);return <div className="result-long-story"><p>{story.opening}</p>{story.middle&&<p>{story.middle}</p>}<p>{story.climax}</p><p>{story.present}</p></div>})()}</section>
- <AdFitBanner unit={ADFIT_UNITS.middle}/>
+ <section className="story result-section"><p className="eyebrow">전생 기록</p><h2>두 사람의 이야기</h2><div className="result-long-story">{storyParagraphs(r.story||r.oneLiner).map((paragraph:string,index:number)=><p key={index}>{paragraph}</p>)}</div></section>
+ <AdFitBanner unit={ADFIT_UNITS.resultMiddle}/>
  <ScoreBars scores={r.scores||{}}/>
  {factors.length>0&&<section className="basis result-section"><p className="eyebrow">관계 근거</p><h2>이 결과에 영향을 준 요소</h2><div className="factor-list">{factors.map((x:string)=><span key={x}>{x}</span>)}</div><p className="basis-copy">두 사람의 일간·일지와 오행의 상생·상극, 합·충 관계를 함께 계산해 가장 가까운 전생 관계 유형을 찾았습니다.</p>{basis?.notice&&<p className="basis-notice">{basis.notice}</p>}</section>}
  <section className="deep-unlock-card"><div><small>심층 관계 해석</small><h3>사주 관계를 더 자세히 보고 싶다면</h3><p>두 사람의 오행, 사주 기둥, 합·충 요소와 관계 성향을 더 자세히 확인할 수 있어요.</p></div><Link className="primary link" to={`/saju/${id}`}>심층 사주 해석 보기</Link></section>
  <RelatedReading relationship={r}/>
- <AdFitBanner unit={ADFIT_UNITS.bottom}/>
+ <AdFitBanner unit={ADFIT_UNITS.resultBottom}/>
  <section className="viral-result-section"><div className="viral-result-head"><p className="eyebrow">공유</p><h2>이 결과 공유하기</h2><p>친구에게 결과를 보내거나, 이번에는 내가 중심이 되는 인연지도를 만들어보세요.</p></div><button className="primary share-btn" onClick={share}>친구에게 결과 공유하기</button><button disabled={making} className="story-share" onClick={storyShare}>{making?'이미지 만드는 중…':'스토리 이미지 만들기'}</button><div className="become-owner-card"><div><small>이번에는 내가 중심이 되어볼까요?</small><h3>내 전생 인연지도 만들기</h3></div><Link className="secondary link" to="/create">내 인연지도 만들기</Link></div>{r.pageSlug&&<Link className="return-map-btn" to={`/n/${r.pageSlug}`}>← {r.ownerNickname}의 인연지도 돌아가기</Link>}</section></section></Shell>}
 
 
@@ -542,14 +501,14 @@ function About(){usePageMeta("서비스 소개 | 사주로 보는 전생의 인�
 <p className="lead">생년월일을 바탕으로 두 사람의 사주 관계를 계산하고, 그 결과를 전생의 역할과 이야기로 재해석하는 소셜 엔터테인먼트 서비스입니다.</p>
 <section><h2>이 서비스가 하는 일</h2><p>한 사람의 운세를 단독으로 보는 서비스가 아니라 두 사람의 관계에 초점을 둡니다. 일간과 일지, 오행의 상생·상극, 천간합과 지지의 합·충·형·파·해·원진 등 여러 관계 요소를 함께 계산한 뒤 친밀감, 신뢰, 충돌, 성장 자극, 질긴 인연 같은 관계 지표로 바꿉니다. 그 지표를 기반으로 가장 가까운 전생 관계 유형과 역할을 선택합니다.</p></section>
 <section><h2>왜 ‘전생’이라는 이야기 형식을 사용하나요?</h2><p>사주 관계는 숫자만 보여주면 어렵고 딱딱하게 느껴질 수 있습니다. 그래서 계산된 관계 특징을 왕과 신하, 스승과 제자, 평생의 벗, 숙명의 라이벌처럼 이해하기 쉬운 이야기 구조로 옮겼습니다. 실제 전생을 증명하거나 미래를 예언하기 위한 것이 아니라, 서로의 관계를 이야기해보는 재미를 위한 장치입니다.</p></section>
-<AdFitBanner unit={ADFIT_UNITS.middle}/><section><h2>인연지도는 어떻게 구성되나요?</h2><p>페이지 주인을 중심으로 친구들이 하나씩 추가됩니다. 인연의 깊이 점수가 높은 사람일수록 지도 중심에 가깝게 배치되고, 각 사람에게는 페이지 주인 기준의 전생 역할이 표시됩니다. 참여자가 늘어나면 가장 깊은 인연, 서로 힘이 되는 인연, 많이 부딪히는 인연처럼 눈에 띄는 관계도 함께 비교할 수 있습니다.</p></section>
+<AdFitBanner unit={ADFIT_UNITS.info}/><section><h2>인연지도는 어떻게 구성되나요?</h2><p>페이지 주인을 중심으로 친구들이 하나씩 추가됩니다. 인연의 깊이 점수가 높은 사람일수록 지도 중심에 가깝게 배치되고, 각 사람에게는 페이지 주인 기준의 전생 역할이 표시됩니다. 참여자가 늘어나면 가장 깊은 인연, 서로 힘이 되는 인연, 많이 부딪히는 인연처럼 눈에 띄는 관계도 함께 비교할 수 있습니다.</p></section>
 <section><h2>결과는 어떻게 계산되나요?</h2><p>닉네임과 생년월일, 양력·음력 여부를 바탕으로 사주 기둥을 계산하고, 두 사람 사이에서 합·충과 오행 관계가 어떻게 나타나는지 비교합니다. 출생시간은 선택 정보이며 모르는 경우에도 이용할 수 있습니다. 결과는 여러 관계 지표를 조합하여 결정되며 단일 요소 하나만으로 관계를 판정하지 않습니다.</p></section>
 <section><h2>결과를 어떻게 받아들여야 하나요?</h2><p>본 서비스는 전통 명리 요소에서 아이디어를 얻은 엔터테인먼트 콘텐츠입니다. 의료·법률·금융 판단이나 중요한 인간관계 결정을 대신하지 않습니다. 결과가 실제 관계를 규정한다고 보기보다, 서로의 차이와 공통점을 가볍게 이야기하는 소재로 이용해 주세요.</p></section>
 <section><h2>운영 및 문의</h2><p>서비스 기능, 개인정보, 오류 신고 및 기타 문의는 <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a>으로 보내주세요.</p></section>
 <Link className="primary link" to="/create">내 인연지도 만들어보기</Link>
 </article></Shell>}
 
-function Guide(){usePageMeta("전생 인연 관계 유형 | 사주로 보는 전생의 인연","사주 관계 분석에서 사용하는 전생 관계 유형과 의미를 확인해보세요.",false);return <Shell><article className="editorial"><p className="eyebrow">RELATION GUIDE</p><h1>27가지<br/>전생 인연</h1><p className="lead">두 사람의 사주 관계 특징에 따라 만날 수 있는 전생 관계들을 소개합니다.</p><div className="guide-grid">{RELATION_GUIDE.map(([i,t,d])=><section className="guide-item" key={t}><span>{i}</span><div><h2>{t}</h2><p>{d}</p></div></section>)}</div><AdFitBanner unit={ADFIT_UNITS.middle}/><section className="guide-note"><h2>점수가 높으면 무조건 좋은 관계인가요?</h2><p>아닙니다. 인연의 깊이, 서로에게 주는 영향, 충돌, 질긴 인연은 서로 다른 관계 특징을 표현합니다. 높고 낮음 자체가 관계의 좋고 나쁨을 뜻하지 않습니다.</p></section></article></Shell>}
+function Guide(){usePageMeta("전생 인연 관계 유형 | 사주로 보는 전생의 인연","사주 관계 분석에서 사용하는 전생 관계 유형과 의미를 확인해보세요.",false);return <Shell><article className="editorial"><p className="eyebrow">RELATION GUIDE</p><h1>27가지<br/>전생 인연</h1><p className="lead">두 사람의 사주 관계 특징에 따라 만날 수 있는 전생 관계들을 소개합니다.</p><div className="guide-grid">{RELATION_GUIDE.map(([i,t,d])=><section className="guide-item" key={t}><span>{i}</span><div><h2>{t}</h2><p>{d}</p></div></section>)}</div><AdFitBanner unit={ADFIT_UNITS.info}/><section className="guide-note"><h2>점수가 높으면 무조건 좋은 관계인가요?</h2><p>아닙니다. 인연의 깊이, 서로에게 주는 영향, 충돌, 질긴 인연은 서로 다른 관계 특징을 표현합니다. 높고 낮음 자체가 관계의 좋고 나쁨을 뜻하지 않습니다.</p></section></article></Shell>}
 
 function Methodology(){usePageMeta("인연 해석 원리 | 사주로 보는 전생의 인연","일간, 오행, 합과 충 등 두 사람의 사주 관계를 어떻게 분석하는지 설명합니다.",false);return <Shell><article className="editorial">
 <p className="eyebrow">METHODOLOGY</p><h1>인연 해석은<br/>어떻게 만들어질까요?</h1>
@@ -557,13 +516,13 @@ function Methodology(){usePageMeta("인연 해석 원리 | 사주로 보는 전�
 <section><h2>1. 일간과 오행</h2><p>사주에서 일간은 자신을 나타내는 중요한 기준으로 사용됩니다. 두 사람의 일간 오행이 서로 생하는지, 극하는지, 같은 오행인지 살펴 관계에서 도움과 자극, 경쟁성이 어떻게 나타날 수 있는지 계산합니다.</p></section>
 <section><h2>2. 일지의 합과 충</h2><p>일지는 관계 해석에서 중요한 축입니다. 육합이나 삼합 계열은 친밀감과 신뢰에 가중치를 주고, 충·형·파·해·원진 요소는 긴장과 충돌, 쉽게 끊기지 않는 관계에 가중치를 주는 방식으로 반영합니다.</p></section>
 <section><h2>3. 관계 지표로 환산</h2><p>계산된 요소는 인연의 깊이, 신뢰, 서로에게 주는 영향, 충돌, 질긴 인연 등의 지표로 정리됩니다. 한 가지 지표만으로 결과를 정하지 않고 여러 지표의 조합을 사용합니다.</p></section>
-<AdFitBanner unit={ADFIT_UNITS.middle}/><section><h2>4. 전생 관계 유형 선택</h2><p>각 관계 유형은 서로 다른 조건을 갖습니다. 신뢰와 상생이 강하면 전우나 보호 관계가 후보가 될 수 있고, 충돌과 경쟁성이 강하면 라이벌 계열이 후보가 될 수 있습니다. 여러 후보의 적합도를 비교해 가장 가까운 유형을 선택합니다.</p></section>
+<AdFitBanner unit={ADFIT_UNITS.info}/><section><h2>4. 전생 관계 유형 선택</h2><p>각 관계 유형은 서로 다른 조건을 갖습니다. 신뢰와 상생이 강하면 전우나 보호 관계가 후보가 될 수 있고, 충돌과 경쟁성이 강하면 라이벌 계열이 후보가 될 수 있습니다. 여러 후보의 적합도를 비교해 가장 가까운 유형을 선택합니다.</p></section>
 <section><h2>5. 역할 방향 결정</h2><p>스승과 제자, 왕과 신하처럼 역할 방향이 있는 관계는 두 사람 사이에서 누가 더 도움을 주는 방향인지, 사주의 상생 흐름이 어느 쪽으로 향하는지 등을 함께 보고 역할을 결정합니다.</p></section>
 <section><h2>6. 전생 스토리로 재해석</h2><p>마지막으로 계산된 관계 유형과 관계 지표를 사용해 이해하기 쉬운 이야기로 표현합니다. 이 과정은 전통 명리를 과학적 사실로 주장하는 것이 아니라 관계 특징을 즐길 수 있도록 구성한 엔터테인먼트 해석입니다.</p></section>
 <div className="contact-card"><span>✉️</span><div><b>계산 방식 관련 문의</b><a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></div></div>
 </article></Shell>}
 
-function FAQ(){usePageMeta("자주 묻는 질문 | 사주로 보는 전생의 인연","전생 인연지도와 사주 관계 해석 이용 방법에 관한 자주 묻는 질문입니다.",false);const q=[['출생시간을 몰라도 할 수 있나요?','네. 출생시간은 선택 입력이라 비워두고 진행할 수 있습니다.'],['친구가 제 생년월일을 볼 수 있나요?','아니요. 입력한 생년월일과 출생시간은 다른 이용자에게 공개하지 않습니다.'],['반대쪽 페이지에서도 같은 결과가 나오나요?','같은 두 사람은 방향이 바뀌어도 동일한 핵심 관계가 유지되도록 설계했습니다. 방향성이 있는 역할은 서로 대응됩니다.'],['실제 전생을 알려주는 건가요?','아닙니다. 전통 명리 관계 요소를 활용한 엔터테인먼트 콘텐츠입니다.'],['정보를 삭제할 수 있나요?','네. 하단의 참여정보 삭제 메뉴에서 해당 친구 페이지에 남긴 참여 기록을 삭제할 수 있습니다.'],['문의는 어디로 하나요?','서비스 및 개인정보 문의는 kikine901@gmail.com 으로 보내주세요.']];return <Shell><article className="editorial"><p className="eyebrow">FAQ</p><h1>자주 묻는 질문</h1><p className="lead">서비스 이용 전에 궁금할 만한 내용을 모았습니다.</p><div className="faq-list">{q.map(([a,b])=><details key={a}><summary>{a}</summary><p>{b}</p></details>)}</div><AdFitBanner unit={ADFIT_UNITS.middle}/><div className="contact-card"><span>✉️</span><div><b>더 궁금한 점이 있나요?</b><a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></div><details><summary>결과가 매번 같은가요?</summary><p>같은 두 사람이 같은 생년월일과 입력 조건으로 분석되면 기본 관계 결과는 일관되게 유지됩니다. 다만 서비스의 관계 계산식이 개선되는 경우 향후 결과 표현이나 세부 지표가 달라질 수 있습니다.</p></details><details><summary>출생시간을 모르면 결과를 볼 수 없나요?</summary><p>출생시간은 선택 입력입니다. 시간을 모르는 경우에도 연주·월주·일주와 관계 요소를 중심으로 분석하며, 시주가 있는 경우보다 사용할 수 있는 정보가 적다는 차이가 있습니다.</p></details></div></article></Shell>}
+function FAQ(){usePageMeta("자주 묻는 질문 | 사주로 보는 전생의 인연","전생 인연지도와 사주 관계 해석 이용 방법에 관한 자주 묻는 질문입니다.",false);const q=[['출생시간을 몰라도 할 수 있나요?','네. 출생시간은 선택 입력이라 비워두고 진행할 수 있습니다.'],['친구가 제 생년월일을 볼 수 있나요?','아니요. 입력한 생년월일과 출생시간은 다른 이용자에게 공개하지 않습니다.'],['반대쪽 페이지에서도 같은 결과가 나오나요?','같은 두 사람은 방향이 바뀌어도 동일한 핵심 관계가 유지되도록 설계했습니다. 방향성이 있는 역할은 서로 대응됩니다.'],['실제 전생을 알려주는 건가요?','아닙니다. 전통 명리 관계 요소를 활용한 엔터테인먼트 콘텐츠입니다.'],['정보를 삭제할 수 있나요?','네. 하단의 참여정보 삭제 메뉴에서 해당 친구 페이지에 남긴 참여 기록을 삭제할 수 있습니다.'],['문의는 어디로 하나요?','서비스 및 개인정보 문의는 kikine901@gmail.com 으로 보내주세요.']];return <Shell><article className="editorial"><p className="eyebrow">FAQ</p><h1>자주 묻는 질문</h1><p className="lead">서비스 이용 전에 궁금할 만한 내용을 모았습니다.</p><div className="faq-list">{q.map(([a,b])=><details key={a}><summary>{a}</summary><p>{b}</p></details>)}</div><AdFitBanner unit={ADFIT_UNITS.info}/><div className="contact-card"><span>✉️</span><div><b>더 궁금한 점이 있나요?</b><a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a></div><details><summary>결과가 매번 같은가요?</summary><p>같은 두 사람이 같은 생년월일과 입력 조건으로 분석되면 기본 관계 결과는 일관되게 유지됩니다. 다만 서비스의 관계 계산식이 개선되는 경우 향후 결과 표현이나 세부 지표가 달라질 수 있습니다.</p></details><details><summary>출생시간을 모르면 결과를 볼 수 없나요?</summary><p>출생시간은 선택 입력입니다. 시간을 모르는 경우에도 연주·월주·일주와 관계 요소를 중심으로 분석하며, 시주가 있는 경우보다 사용할 수 있는 정보가 적다는 차이가 있습니다.</p></details></div></article></Shell>}
 
 function LegalLayout({title,updated,children}:{title:string;updated:string;children:React.ReactNode}){return <Shell><article className="legal"><p className="eyebrow">SERVICE POLICY</p><h1>{title}</h1><p className="legal-updated">최종 수정: {updated}</p>{children}</article></Shell>}
 
@@ -573,7 +532,7 @@ function Privacy(){usePageMeta("개인정보처리방침 | 사주로 보는 전�
  <section><h2>3. 개인정보의 제3자 제공</h2><p>서비스는 이용자의 개인정보를 임의로 판매하지 않습니다. 다만 웹 호스팅, 데이터베이스, 광고 및 사이트 운영 과정에서 외부 서비스 제공자가 각자의 정책과 서비스 설정에 따라 필요한 정보를 처리할 수 있습니다.</p></section>
  <section><h2>4. 외부 서비스 및 처리업무</h2><p><b>Cloudflare</b> — 웹사이트 호스팅, 콘텐츠 전송, 보안 및 네트워크 처리를 위해 사용합니다.</p><p><b>Supabase</b> — 이용자가 입력한 정보, 인연지도 및 관계 결과의 데이터베이스 저장과 서버 기능 제공을 위해 사용합니다.</p><p><b>카카오 AdFit</b> — 서비스 운영을 위한 온라인 광고를 제공하기 위해 사용할 수 있습니다. 광고 제공 과정에서 쿠키, IP 주소, 브라우저·기기 정보, 방문·이용 기록 등 광고 요청과 관련된 정보가 자동으로 생성되거나 처리될 수 있으며, 광고 제공·성과 측정·서비스 운영 등에 활용될 수 있습니다. 사주 관계 분석을 위해 입력한 닉네임, 생년월일, 출생시간, 양·음력 구분 및 생성된 관계 결과를 광고 맞춤화를 위한 정보로 별도 제공하지 않습니다.</p></section>
  <section><h2>5. 쿠키 및 유사 기술</h2><p>서비스 또는 외부 서비스 제공자는 서비스 제공, 보안, 광고 제공 및 측정을 위해 쿠키나 유사한 기술을 사용할 수 있습니다. 이용자는 사용하는 웹브라우저의 개인정보 및 쿠키 설정에서 쿠키 저장을 허용하거나 제한할 수 있습니다. 쿠키를 제한하더라도 본 서비스의 기본적인 사주 관계 분석 기능은 이용할 수 있습니다.</p></section>
- <AdFitBanner unit={ADFIT_UNITS.middle}/><section><h2>6. 정보주체의 권리</h2><p>이용자는 자신의 개인정보에 대한 열람, 정정, 삭제, 처리정지 등을 요청할 수 있습니다. 특정 친구 페이지에 남긴 참여 기록은 <Link to="/delete">참여정보 삭제</Link> 화면에서 본인 확인 후 직접 삭제할 수 있으며, 추가 문의는 <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a>으로 접수할 수 있습니다.</p></section>
+ <AdFitBanner unit={ADFIT_UNITS.info}/><section><h2>6. 정보주체의 권리</h2><p>이용자는 자신의 개인정보에 대한 열람, 정정, 삭제, 처리정지 등을 요청할 수 있습니다. 특정 친구 페이지에 남긴 참여 기록은 <Link to="/delete">참여정보 삭제</Link> 화면에서 본인 확인 후 직접 삭제할 수 있으며, 추가 문의는 <a href="mailto:kikine901@gmail.com">kikine901@gmail.com</a>으로 접수할 수 있습니다.</p></section>
  <section><h2>7. 개인정보의 파기</h2><p>삭제 요청 등으로 보유 목적이 없어지면 해당 참여 연결 기록을 삭제합니다. 관계 기록이 더 이상 어떤 페이지에서도 사용되지 않는 경우 관련 관계 결과도 함께 정리하도록 설계되어 있습니다.</p></section>
  <section><h2>8. 안전성 확보조치</h2><p>브라우저가 개인정보 테이블에 직접 접근하지 않도록 서버 API를 통해 처리하고, 데이터베이스 접근 권한을 제한합니다. 삭제용 비밀값은 원문 대신 해시값 형태로 서버에 저장합니다.</p></section>
  <section><h2>9. 아동의 개인정보</h2><p>서비스는 일반 이용자를 대상으로 하며, 만 14세 미만 이용자의 개인정보를 의도적으로 수집하는 것을 목적으로 하지 않습니다. 만 14세 미만 이용자의 개인정보 처리에 별도 법적 절차가 필요한 경우 법정대리인 동의 등 필요한 조치를 마련합니다.</p></section>
@@ -586,7 +545,7 @@ function Terms(){usePageMeta("이용약관 | 사주로 보는 전생의 인연",
  <section><h2>3. 이용자의 책임</h2><p>이용자는 본인이 입력할 권한이 있는 정보를 사용해야 하며 타인의 개인정보를 동의 없이 수집하거나 악의적으로 입력해서는 안 됩니다. 모욕, 괴롭힘, 사칭 등 타인의 권리를 침해하는 방식으로 서비스를 이용해서는 안 됩니다.</p></section>
  <section><h2>4. 서비스 변경 및 중단</h2><p>서비스 품질 향상, 안정성 확보 또는 운영상 필요에 따라 기능, 관계 계산식, 화면 및 데이터 구조가 개선될 수 있으며, 필요한 경우 일부 기능이 변경되거나 일시적으로 중단될 수 있습니다.</p></section>
  <section><h2>5. 지식재산권</h2><p>서비스가 제공하는 UI, 문구, 관계 유형 및 자체 제작 콘텐츠에 관한 권리는 법령 또는 별도 약정에 따라 보호됩니다. 이용자가 생성한 공유 이미지는 개인적인 공유 목적으로 사용할 수 있습니다.</p></section>
- <AdFitBanner unit={ADFIT_UNITS.middle}/><section><h2>6. 광고 및 외부 서비스</h2><p>서비스 운영을 위해 광고 또는 외부 서비스가 표시될 수 있습니다. 광고의 내용과 광고를 통해 연결되는 외부 서비스는 해당 제공자의 책임과 정책에 따라 운영되며, 광고가 서비스의 사주 관계 분석 결과에 영향을 주지는 않습니다.</p></section>
+ <AdFitBanner unit={ADFIT_UNITS.info}/><section><h2>6. 광고 및 외부 서비스</h2><p>서비스 운영을 위해 광고 또는 외부 서비스가 표시될 수 있습니다. 광고의 내용과 광고를 통해 연결되는 외부 서비스는 해당 제공자의 책임과 정책에 따라 운영되며, 광고가 서비스의 사주 관계 분석 결과에 영향을 주지는 않습니다.</p></section>
  <section><h2>7. 면책</h2><p>서비스는 엔터테인먼트 결과의 정확성이나 특정 관계 개선 효과를 보장하지 않습니다. 이용자의 입력 오류, 네트워크 장애, 외부 플랫폼 장애 등 서비스가 합리적으로 통제하기 어려운 사유로 발생한 문제에 대해서는 관련 법령이 허용하는 범위에서 책임이 제한될 수 있습니다.</p></section>
  </LegalLayout>}
 
@@ -599,7 +558,7 @@ function DeleteData(){
    const del=await fetch(`${DELETE_API}/delete`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({relationship_id:id,page_slug:slug,delete_token:issued.delete_token})});const dd=await del.json();if(!del.ok)throw new Error(dd.error||'삭제에 실패했습니다.');setDone(true);
  }catch(err:any){alert(err?.message||'삭제 중 오류가 발생했습니다.')}finally{setBusy(false)}};
  if(done)return <Shell><section className="delete-page"><div className="card delete-success"><span>✓</span><h1>삭제되었습니다</h1><p>해당 친구 페이지에 남아 있던 참여 연결 기록을 삭제했습니다.</p><Link className="primary link" to="/">홈으로 돌아가기</Link></div></section></Shell>;
- return <Shell><section className="delete-page"><p className="eyebrow">PRIVACY CONTROL</p><h1>참여정보 삭제</h1><p className="muted">친구의 전생 인연지도에 참여하면서 남긴 기록을 직접 삭제할 수 있습니다.</p><form className="card delete-form" onSubmit={submit}>
+ return <Shell><section className="delete-page"><p className="eyebrow">개인정보 관리</p><h1>참여정보 삭제</h1><p className="muted">친구의 전생 인연지도에 참여하면서 남긴 기록을 직접 삭제할 수 있습니다.</p><form className="card delete-form" onSubmit={submit}>
    <label>결과 링크 또는 결과 ID<input required value={relationship} onChange={e=>setRelationship(e.target.value)} placeholder="https://.../result/xxxx 또는 UUID"/></label>
    <label>참여할 때 입력한 닉네임<input required value={nickname} onChange={e=>setNickname(e.target.value)}/></label>
    <label>생년월일<input required type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label>
@@ -607,7 +566,7 @@ function DeleteData(){
    <label>출생시간 <span>당시 입력하지 않았다면 비워두세요</span><input type="time" value={birthTime} onChange={e=>setBirthTime(e.target.value)}/></label>
    <div className="danger-note"><b>삭제 범위</b><p>현재 셀프 삭제는 ‘해당 친구 페이지에 참여한 기록’을 대상으로 합니다. 여러 페이지에 참여했다면 각 결과별로 삭제해야 합니다.</p></div>
    <button disabled={busy} className="danger-button">{busy?'본인 확인 및 삭제 중...':'내 참여 기록 삭제하기'}</button>
- </form></section></Shell>}
+ </form><AdFitBanner unit={ADFIT_UNITS.info}/></section></Shell>}
 
 
 class ErrorBoundary extends React.Component<{children:React.ReactNode},{error:boolean}>{
