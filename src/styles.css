@@ -1868,3 +1868,10 @@ footer p{margin:0;color:var(--quiet)!important}
   .owner-login-card{padding:17px 14px}
   .owner-password-setup{padding:20px 16px!important}
 }
+
+
+/* 2026-09-29 admin private birth date + AdFit render stability */
+.admin-private-birth{display:block;margin-top:5px;color:#8a6749!important;font-size:11px!important;line-height:1.45;font-weight:700;letter-spacing:0}
+.admin-map-main .admin-private-birth{color:#75583f!important}
+.admin-participant .admin-private-birth{color:#8a6749!important}
+@media(max-width:520px){.admin-private-birth{font-size:10px!important}}

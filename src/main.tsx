@@ -8,6 +8,7 @@ const DELETE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife
 const ANALYTICS_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-analytics';
 const ELEMENTS_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-elements';
 const ADMIN_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-admin';
+const ADMIN_PEOPLE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-admin-people';
 const OWNER_AUTH_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-owner-auth';
 const analyticsSession=()=>{try{let id=sessionStorage.getItem('pastlife:session');if(!id){id=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;sessionStorage.setItem('pastlife:session',id)}return id}catch{return `${Date.now()}-${Math.random().toString(36).slice(2)}`}};
 const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event_name,session_id:analyticsSession(),page_slug:data.page_slug||null,relationship_id:data.relationship_id||null,metadata:data.metadata||{}})}).catch(()=>{})};
@@ -28,12 +29,38 @@ const ADFIT_UNITS={
  info:'DAN-57fhPWx7vW1RfBbK'
 } as const;
 function AdFitBanner({unit,label='광고'}:{unit:string;label?:string}){
+ const slotRef=React.useRef<HTMLModElement|null>(null);
  React.useEffect(()=>{
-   const existing=document.querySelector(`script[src="${ADFIT_SCRIPT}"]`);
-   if(existing){ try{(window as any).adfit?.render?.()}catch{}; return; }
-   const script=document.createElement('script'); script.src=ADFIT_SCRIPT; script.async=true; document.body.appendChild(script);
+   let cancelled=false;
+   const render=()=>{
+     if(cancelled||!slotRef.current||!document.body.contains(slotRef.current))return;
+     try{(window as any).adfit?.render?.()}catch{}
+   };
+   const schedule=()=>{
+     requestAnimationFrame(()=>requestAnimationFrame(render));
+     const t1=window.setTimeout(render,180);
+     const t2=window.setTimeout(render,700);
+     return [t1,t2];
+   };
+   let timers:number[]=[];
+   const existing=document.querySelector(`script[src="${ADFIT_SCRIPT}"]`) as HTMLScriptElement|null;
+   if(existing){
+     if((window as any).adfit?.render)timers=schedule();
+     else{
+       const onLoad=()=>{timers=schedule()};
+       existing.addEventListener('load',onLoad,{once:true});
+       return()=>{cancelled=true;existing.removeEventListener('load',onLoad);timers.forEach(clearTimeout)};
+     }
+   }else{
+     const script=document.createElement('script');
+     script.src=ADFIT_SCRIPT;
+     script.async=true;
+     script.onload=()=>{timers=schedule()};
+     document.body.appendChild(script);
+   }
+   return()=>{cancelled=true;timers.forEach(clearTimeout)};
  },[unit]);
- return <aside className="adfit-wrap" aria-label={label}><span className="adfit-label">{label}</span><ins className="kakao_ad_area" style={{display:'none'}} data-ad-unit={unit} data-ad-width="320" data-ad-height="100"/></aside>;
+ return <aside className="adfit-wrap" aria-label={label}><span className="adfit-label">{label}</span><ins ref={slotRef} className="kakao_ad_area" style={{display:'none'}} data-ad-unit={unit} data-ad-width="320" data-ad-height="100"/></aside>;
 }
 const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link><a href="/contents/">읽을거리</a><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
 
@@ -553,14 +580,40 @@ function NotFound(){usePageMeta('페이지를 찾을 수 없습니다 | 사주�
 
 function Admin(){
  usePageMeta('관리자 | 사주로 보는 전생의 인연','운영 데이터 관리 화면',true);
- const [code,setCode]=React.useState(()=>sessionStorage.getItem('pastlife:admin-code')||''); const [input,setInput]=React.useState(''); const [data,setData]=React.useState<any>(null); const [busy,setBusy]=React.useState(false); const [error,setError]=React.useState(''); const [query,setQuery]=React.useState(''); const [sort,setSort]=React.useState<'recent'|'participants'>('recent');
- const load=React.useCallback(async(adminCode:string)=>{if(!adminCode)return;setBusy(true);setError('');try{const r=await fetch(ADMIN_API,{headers:{'x-admin-code':adminCode}});const d=await r.json();if(!r.ok)throw new Error(d.error||'관리자 데이터를 불러오지 못했습니다.');setData(d)}catch(e:any){setData(null);setError(e?.message||'관리자 데이터를 불러오지 못했습니다.')}finally{setBusy(false)}},[]);
+ const [code,setCode]=React.useState(()=>sessionStorage.getItem('pastlife:admin-code')||'');
+ const [input,setInput]=React.useState('');
+ const [data,setData]=React.useState<any>(null);
+ const [busy,setBusy]=React.useState(false);
+ const [error,setError]=React.useState('');
+ const [query,setQuery]=React.useState('');
+ const [sort,setSort]=React.useState<'recent'|'participants'>('recent');
+ const load=React.useCallback(async(adminCode:string)=>{
+   if(!adminCode)return;
+   setBusy(true);setError('');
+   try{
+     const headers={'x-admin-code':adminCode};
+     const [dashboardRes,peopleRes]=await Promise.all([fetch(ADMIN_API,{headers}),fetch(ADMIN_PEOPLE_API,{headers})]);
+     const dashboard=await dashboardRes.json();
+     if(!dashboardRes.ok)throw new Error(dashboard.error||'관리자 데이터를 불러오지 못했습니다.');
+     let privatePeople:any={pages:[]};
+     if(peopleRes.ok){try{privatePeople=await peopleRes.json()}catch{}}
+     const privateByPage=new Map((privatePeople?.pages||[]).map((p:any)=>[p.page_id,p]));
+     const pages=(dashboard.pages||[]).map((p:any)=>{
+       const priv:any=privateByPage.get(p.id)||null;
+       const birthByPerson=new Map((priv?.participants||[]).map((x:any)=>[x.participant_person_id,x.birth_date]));
+       return {...p,owner:{...(p.owner||{}),birth_date:priv?.owner?.birth_date||null},participants:(p.participants||[]).map((x:any)=>({...x,birth_date:birthByPerson.get(x.participant_person_id)||null}))};
+     });
+     setData({...dashboard,pages});
+   }catch(e:any){setData(null);setError(e?.message||'관리자 데이터를 불러오지 못했습니다.')}finally{setBusy(false)}
+ },[]);
  React.useEffect(()=>{if(code)load(code)},[code,load]);
- const login=(e:React.FormEvent)=>{e.preventDefault();const v=input.trim();if(!v)return;sessionStorage.setItem('pastlife:admin-code',v);setCode(v);setInput('')}; const logout=()=>{sessionStorage.removeItem('pastlife:admin-code');setCode('');setData(null);setError('')};
+ const login=(e:React.FormEvent)=>{e.preventDefault();const v=input.trim();if(!v)return;sessionStorage.setItem('pastlife:admin-code',v);setCode(v);setInput('')};
+ const logout=()=>{sessionStorage.removeItem('pastlife:admin-code');setCode('');setData(null);setError('')};
  const action=async(body:any,confirmText?:string)=>{if(confirmText&&!confirm(confirmText))return;setBusy(true);setError('');try{const r=await fetch(ADMIN_API,{method:'POST',headers:{'content-type':'application/json','x-admin-code':code},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error||'관리 작업에 실패했습니다.');await load(code)}catch(e:any){setError(e?.message||'관리 작업에 실패했습니다.')}finally{setBusy(false)}};
  if(!code)return <Shell><section className="admin-page admin-login"><p className="eyebrow">관리자</p><h1>관리자 페이지</h1><p className="muted">관리자 코드를 입력하면 생성된 인연지도와 참여 현황을 확인할 수 있습니다.</p><form className="card admin-login-form" onSubmit={login}><label>관리자 코드<input autoFocus type="password" autoComplete="current-password" value={input} onChange={e=>setInput(e.target.value)} placeholder="관리자 코드"/></label><button className="primary">관리자 입장</button></form></section></Shell>;
- const pages=[...(data?.pages||[])].filter((p:any)=>{const q=query.trim().toLowerCase();return !q||String(p.owner?.nickname||'').toLowerCase().includes(q)||String(p.slug||'').toLowerCase().includes(q)}).sort((a:any,b:any)=>sort==='participants'?Number(b.participant_count||0)-Number(a.participant_count||0):new Date(b.created_at).getTime()-new Date(a.created_at).getTime());
- return <Shell><section className="admin-page"><div className="admin-head"><div><p className="eyebrow">관리자</p><h1>서비스 현황</h1></div><div className="admin-actions"><button className="secondary" onClick={()=>load(code)} disabled={busy}>{busy?'처리 중…':'새로고침'}</button><button className="admin-logout" onClick={logout}>로그아웃</button></div></div>{error&&<div className="admin-error" role="alert">{error}</div>}{data&&<><div className="admin-summary"><div><span>생성된 지도</span><strong>{data.summary?.pages||0}</strong></div><div><span>전체 참여</span><strong>{data.summary?.participations||0}</strong></div><div><span>관계 결과</span><strong>{data.summary?.relationships||0}</strong></div><div><span>등록 인물</span><strong>{data.summary?.people||0}</strong></div></div><div className="admin-toolbar"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="닉네임 또는 지도 주소 검색" aria-label="지도 검색"/><select value={sort} onChange={e=>setSort(e.target.value as any)} aria-label="정렬"><option value="recent">최근 생성순</option><option value="participants">참여자 많은 순</option></select></div><div className="admin-list">{pages.map((p:any)=><article className="admin-map-row" key={p.id}><div className="admin-map-main"><div><b>{p.owner?.nickname||'이름 없음'}</b><span>{p.slug}</span></div><a href={`/n/${p.slug}`} target="_blank" rel="noreferrer">실제 지도 열기</a></div><div className="admin-map-meta"><span className={p.is_active?'active':'inactive'}>{p.is_active?'활성':'비활성'}</span><span><strong>{p.participant_count}</strong>명 참여</span><span>{new Date(p.created_at).toLocaleString('ko-KR')}</span></div><div className="admin-row-actions"><button disabled={busy} onClick={()=>action({action:'set_active',page_id:p.id,active:!p.is_active},`${p.owner?.nickname||'이 지도'} 지도를 ${p.is_active?'비활성화':'다시 활성화'}할까요?`)}>{p.is_active?'지도 비활성화':'지도 다시 활성화'}</button></div>{p.participants?.length>0&&<details><summary>참여자 {p.participant_count}명 보기</summary><div className="admin-participants">{p.participants.map((x:any)=><div key={x.relationship_id} className="admin-participant"><div><b>{x.nickname}</b><span>{x.relationship_type} · {x.era}</span></div><strong>{Number(x.scores?.['인연의깊이']||0)}점</strong><div><a href={`/result/${x.relationship_id}`} target="_blank" rel="noreferrer">결과 보기</a><button disabled={busy} onClick={()=>action({action:'remove_participant',page_id:p.id,relationship_id:x.relationship_id},`${x.nickname}님의 참여 기록을 이 지도에서 제거할까요?\n이 작업은 되돌릴 수 없습니다.`)}>참여 제거</button></div></div>)}</div></details>}<div className="admin-danger"><button disabled={busy} onClick={()=>action({action:'delete_page',page_id:p.id},`${p.owner?.nickname||'이 지도'}의 인연지도를 영구 삭제할까요?\n참여 ${p.participant_count}명 연결 기록도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.`)}>지도 영구 삭제</button></div></article>)}</div></>}</section></Shell>
+ const q=query.trim().toLowerCase();
+ const pages=[...(data?.pages||[])].filter((p:any)=>{if(!q)return true;const ownerHit=String(p.owner?.nickname||'').toLowerCase().includes(q)||String(p.owner?.birth_date||'').includes(q)||String(p.slug||'').toLowerCase().includes(q);const participantHit=(p.participants||[]).some((x:any)=>String(x.nickname||'').toLowerCase().includes(q)||String(x.birth_date||'').includes(q));return ownerHit||participantHit}).sort((a:any,b:any)=>sort==='participants'?Number(b.participant_count||0)-Number(a.participant_count||0):new Date(b.created_at).getTime()-new Date(a.created_at).getTime());
+ return <Shell><section className="admin-page"><div className="admin-head"><div><p className="eyebrow">관리자</p><h1>서비스 현황</h1></div><div className="admin-actions"><button className="secondary" onClick={()=>load(code)} disabled={busy}>{busy?'처리 중…':'새로고침'}</button><button className="admin-logout" onClick={logout}>로그아웃</button></div></div>{error&&<div className="admin-error" role="alert">{error}</div>}{data&&<><div className="admin-summary"><div><span>생성된 지도</span><strong>{data.summary?.pages||0}</strong></div><div><span>전체 참여</span><strong>{data.summary?.participations||0}</strong></div><div><span>관계 결과</span><strong>{data.summary?.relationships||0}</strong></div><div><span>등록 인물</span><strong>{data.summary?.people||0}</strong></div></div><div className="admin-toolbar"><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="닉네임 · 생년월일 · 지도 주소 검색" aria-label="지도 검색"/><select value={sort} onChange={e=>setSort(e.target.value as any)} aria-label="정렬"><option value="recent">최근 생성순</option><option value="participants">참여자 많은 순</option></select></div><div className="admin-list">{pages.map((p:any)=><article className="admin-map-row" key={p.id}><div className="admin-map-main"><div><b>{p.owner?.nickname||'이름 없음'}</b><span>{p.slug}</span>{p.owner?.birth_date&&<small className="admin-private-birth">지도 주인 생년월일 · {p.owner.birth_date}</small>}</div><a href={`/n/${p.slug}`} target="_blank" rel="noreferrer">실제 지도 열기</a></div><div className="admin-map-meta"><span className={p.is_active?'active':'inactive'}>{p.is_active?'활성':'비활성'}</span><span><strong>{p.participant_count}</strong>명 참여</span><span>{new Date(p.created_at).toLocaleString('ko-KR')}</span></div><div className="admin-row-actions"><button disabled={busy} onClick={()=>action({action:'set_active',page_id:p.id,active:!p.is_active},`${p.owner?.nickname||'이 지도'} 지도를 ${p.is_active?'비활성화':'다시 활성화'}할까요?`)}>{p.is_active?'지도 비활성화':'지도 다시 활성화'}</button></div>{p.participants?.length>0&&<details><summary>참여자 {p.participant_count}명 보기</summary><div className="admin-participants">{p.participants.map((x:any)=><div key={x.relationship_id} className="admin-participant"><div><b>{x.nickname}</b><span>{x.relationship_type} · {x.era}</span>{x.birth_date&&<small className="admin-private-birth">생년월일 · {x.birth_date}</small>}</div><strong>{Number(x.scores?.['인연의깊이']||0)}점</strong><div><a href={`/result/${x.relationship_id}`} target="_blank" rel="noreferrer">결과 보기</a><button disabled={busy} onClick={()=>action({action:'remove_participant',page_id:p.id,relationship_id:x.relationship_id},`${x.nickname}님의 참여 기록을 이 지도에서 제거할까요?\n이 작업은 되돌릴 수 없습니다.`)}>참여 제거</button></div></div>)}</div></details>}<div className="admin-danger"><button disabled={busy} onClick={()=>action({action:'delete_page',page_id:p.id},`${p.owner?.nickname||'이 지도'}의 인연지도를 영구 삭제할까요?\n참여 ${p.participant_count}명 연결 기록도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.`)}>지도 영구 삭제</button></div></article>)}</div></>}</section></Shell>
 }
 
 function App(){return <Routes><Route path="/" element={<Home/>}/><Route path="/create" element={<Create/>}/><Route path="/n/:slug" element={<Page/>}/><Route path="/result/:id" element={<Result/>}/><Route path="/saju/:id" element={<DetailedSaju/>}/><Route path="/about" element={<About/>}/><Route path="/guide" element={<Guide/>}/><Route path="/methodology" element={<Methodology/>}/><Route path="/faq" element={<FAQ/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="/ad/:id" element={<LegacyAdRedirect/>}/><Route path="*" element={<NotFound/>}/><Route path="/terms" element={<Terms/>}/><Route path="/delete" element={<DeleteData/>}/><Route path="/admin" element={<Admin/>}/></Routes>}
