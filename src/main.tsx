@@ -178,8 +178,17 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
    water:{label:'수',angle:198},
  };
  const elementOf=(item:any)=>{
-   const e=String(item?.day_element||'').toLowerCase();
-   return elementOrder.includes(e as any)?e:'earth';
+   const raw=String(item?.day_element||'').trim();
+   const e=raw.toLowerCase();
+   if(elementOrder.includes(e as any))return e;
+   const aliases:Record<string,string>={'목':'wood','木':'wood','화':'fire','火':'fire','토':'earth','土':'earth','금':'metal','金':'metal','수':'water','水':'water'};
+   return aliases[raw]||'unknown';
+ };
+ const fallbackAngle=(id:any)=>{
+   const text=String(id||'unknown');
+   let hash=0;
+   for(let i=0;i<text.length;i++)hash=(Math.imul(hash,31)+text.charCodeAt(i))|0;
+   return ((Math.abs(hash)%360)-180);
  };
  const radiusForScore=(raw:number)=>{
    const score=Math.max(60,Math.min(100,Number(raw)||60));
@@ -195,27 +204,77 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
  });
  for(const list of groups.values()) list.sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
 
+ // 사람 노드가 서로 가려지지 않도록, 각 오행 섹터 안에서 후보 위치를 탐색해 충돌을 피합니다.
+ // 점수에 따른 기본 반지름은 그대로 유지하고, 겹치는 경우에만 각도/반지름을 소폭 보정합니다.
+ const placed:any[]=[];
+ const nodeMinDistance=14.5; // 지도 크기 대비 노드 한 개보다 조금 넓은 안전거리
+ const angleCandidates=[0,-18,18,-36,36,-54,54,-68,68];
+ const radiusCandidates=[0,2.4,-2.4,4.8,-4.8,7.2,-7.2];
+ const clampRadiusToBand=(score:number,radius:number)=>{
+   const band=bandOf(score);
+   const ranges:Record<string,[number,number]>={
+     '90':[13,23.2],
+     '80':[23.3,31.8],
+     '70':[31.9,39.5],
+     '60':[39.6,45.0],
+   };
+   const [min,max]=ranges[band];
+   return Math.max(min,Math.min(max,radius));
+ };
+ const collides=(x:number,y:number)=>placed.some((p:any)=>Math.hypot(x-p.x,y-p.y)<nodeMinDistance);
  const nodes=visible.map((item:any)=>{
    const score=Math.max(60,Math.min(100,scoreOf(item,'인연의깊이')||60));
    const element=elementOf(item);
-   const key=`${element}:${bandOf(score)}`;
-   const peers=groups.get(key)||[item];
-   const index=Math.max(0,peers.findIndex((x:any)=>x.id===item.id));
-   const count=Math.max(1,peers.length);
    const sector=elementMeta[element];
-   const spread=Math.min(64,18+Math.max(0,count-1)*8);
-   const offset=count===1?0:(-spread/2)+(spread*index/(count-1));
-   const angle=(sector.angle+offset)*Math.PI/180;
-   const radius=radiusForScore(score);
-   return {...item,x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius,score,element};
+   const baseAngle=sector?.angle??fallbackAngle(item.id);
+   const baseRadius=radiusForScore(score);
+   let best:any=null;
+
+   // 같은 오행은 같은 방향 범위 안에 두되, 이미 배치된 사람과 겹치지 않는 위치를 우선합니다.
+   for(const radialShift of radiusCandidates){
+     for(const angleShift of angleCandidates){
+       if(sector&&Math.abs(angleShift)>68)continue;
+       const radius=clampRadiusToBand(score,baseRadius+radialShift);
+       const angle=(baseAngle+angleShift)*Math.PI/180;
+       const x=50+Math.cos(angle)*radius;
+       const y=50+Math.sin(angle)*radius;
+       const penalty=Math.abs(radialShift)*1.8+Math.abs(angleShift)*0.12;
+       if(!collides(x,y)){best={x,y,radius,angleShift,penalty};break}
+       if(!best||penalty<best.penalty)best={x,y,radius,angleShift,penalty};
+     }
+     if(best&&!collides(best.x,best.y))break;
+   }
+
+   // 아주 사람이 많은 경우 마지막으로 더 넓게 퍼뜨려 반드시 노드가 한곳에 포개지지 않게 합니다.
+   if(!best||collides(best.x,best.y)){
+     let fallbackBest=best;
+     let fallbackClearance=-Infinity;
+     const wideAngles=[-70,-56,-42,-28,-14,0,14,28,42,56,70];
+     const wideRadius=[-7,-3.5,0,3.5,7];
+     for(const angleShift of wideAngles){
+       for(const radialShift of wideRadius){
+         const radius=clampRadiusToBand(score,baseRadius+radialShift);
+         const angle=(baseAngle+angleShift)*Math.PI/180;
+         const x=50+Math.cos(angle)*radius;
+         const y=50+Math.sin(angle)*radius;
+         const clearance=placed.length?Math.min(...placed.map((p:any)=>Math.hypot(x-p.x,y-p.y))):99;
+         if(clearance>fallbackClearance){fallbackClearance=clearance;fallbackBest={x,y,radius,angleShift,penalty:999}}
+       }
+     }
+     best=fallbackBest;
+   }
+
+   const node={...item,x:best?.x??50,y:best?.y??50,score,element};
+   placed.push(node);
+   return node;
  });
 
  const renderNode=(n:any)=>{
    const isMine=n.id===mineId;
    const inner=<><span className="map-role">{n.participant_role||n.relationship_type||'인연'}</span><b>{isMine?'나':n.nickname}</b>{isMine&&<em className="map-mine-tag">나</em>}</>;
    return clickable
-     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node element-${n.element} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${elementMeta[n.element]?.label||'토'} · ${n.score}점`}>{inner}</Link>
-     : <div key={n.id} className={`radial-node visitor-node element-${n.element} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${elementMeta[n.element]?.label||'토'} · ${n.score}점`:`${n.nickname} · ${elementMeta[n.element]?.label||'토'} · ${n.score}점`}>{inner}</div>;
+     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node element-${n.element} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${elementMeta[n.element]?.label||'오행 미확인'} · ${n.score}점`}>{inner}</Link>
+     : <div key={n.id} className={`radial-node visitor-node element-${n.element} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${elementMeta[n.element]?.label||'오행 미확인'} · ${n.score}점`:`${n.nickname} · ${elementMeta[n.element]?.label||'오행 미확인'} · ${n.score}점`}>{inner}</div>;
  };
 
  const elementLabels=elementOrder.map(element=>{
@@ -264,7 +323,7 @@ function rankInfo(items:any[],mineId?:string|null){
 function Page(){usePageMeta('전생 인연지도 | 사주로 보는 전생의 인연',undefined,true);const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);const [ownerPasswordEnabled,setOwnerPasswordEnabled]=React.useState(false);const [showOwnerLogin,setShowOwnerLogin]=React.useState(false);const [ownerPassword,setOwnerPassword]=React.useState('');const [ownerLoginBusy,setOwnerLoginBusy]=React.useState(false);const [ownerLoginError,setOwnerLoginError]=React.useState('');const [setupPassword,setSetupPassword]=React.useState('');const [setupPasswordConfirm,setSetupPasswordConfirm]=React.useState('');const [setupBusy,setSetupBusy]=React.useState(false);const [setupMessage,setSetupMessage]=React.useState('');
  const mineId=new URLSearchParams(location.search).get('mine');
  const verifyOwner=React.useCallback(async()=>{const ownerToken=localStorage.getItem(`owner:${slug}`)||'';try{const r=await fetch(`${OWNER_AUTH_API}/verify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug,owner_token:ownerToken})});const d=await r.json();if(r.ok){setOwnerMode(!!d.owner_authenticated);setOwnerPasswordEnabled(!!d.owner_password_enabled);if(ownerToken&&!d.owner_authenticated)localStorage.removeItem(`owner:${slug}`)}else{setOwnerMode(false)}}catch{setOwnerMode(false)}},[slug]);
- const load=React.useCallback(async()=>{setLoading(true);try{const [pageRes,elRes]=await Promise.all([fetch(`${API}/pages/${encodeURIComponent(slug||'')}`),fetch(`${ELEMENTS_API}?slug=${encodeURIComponent(slug||'')}`).catch(()=>null),verifyOwner()]);const d=await pageRes.json();if(!pageRes.ok){setData(null);return}let ed:any=null;if(elRes&&elRes.ok){try{ed=await elRes.json()}catch{}}const byRel=new Map((ed?.relationships||[]).map((x:any)=>[x.relationship_id,x.day_element]));const relationships=(d.relationships||[]).map((x:any)=>({...x,day_element:byRel.get(x.id)||null}));setData({...d,owner_element:ed?.owner_element||null,relationships})}finally{setLoading(false)}},[slug,verifyOwner]);
+ const load=React.useCallback(async()=>{setLoading(true);try{const [pageRes,elRes]=await Promise.all([fetch(`${API}/pages/${encodeURIComponent(slug||'')}`),fetch(`${ELEMENTS_API}?slug=${encodeURIComponent(slug||'')}`).catch(()=>null),verifyOwner()]);const d=await pageRes.json();if(!pageRes.ok){setData(null);return}let ed:any=null;if(elRes&&elRes.ok){try{ed=await elRes.json()}catch{}}const byRel=new Map((ed?.relationships||[]).map((x:any)=>[String(x.relationship_id),x.day_element]));const relationships=(d.relationships||[]).map((x:any)=>({...x,day_element:byRel.get(String(x.id))||null}));setData({...d,owner_element:ed?.owner_element||null,relationships})}finally{setLoading(false)}},[slug,verifyOwner]);
  React.useEffect(()=>{load()},[load]);React.useEffect(()=>{if(slug)track('page_view',{page_slug:slug})},[slug]);
  if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
  const mine=data.relationships?.find((x:any)=>x.id===mineId);const mineRank=rankInfo(data.relationships||[],mineId);
