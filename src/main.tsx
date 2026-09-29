@@ -233,9 +233,9 @@ function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:strin
    </div>
    <div className="map-element-guide" aria-label="오행 배치 안내"><span>목 · 위</span><span>화 · 오른쪽 위</span><span>토 · 오른쪽 아래</span><span>금 · 왼쪽 아래</span><span>수 · 왼쪽 위</span></div>
    <div className="radial-map element-map">
-     <div className="orbit score-orbit score-orbit-90"><span>90선</span></div>
-     <div className="orbit score-orbit score-orbit-80"><span>80선</span></div>
-     <div className="orbit score-orbit score-orbit-70"><span>70선</span></div>
+     <div className="orbit score-orbit score-orbit-90"/>
+     <div className="orbit score-orbit score-orbit-80"/>
+     <div className="orbit score-orbit score-orbit-70"/>
      {elementLabels.map(x=><span key={x.element} className={`map-element-label map-element-${x.element}`} style={{left:`${x.x}%`,top:`${x.y}%`}}>{x.label}</span>)}
      <svg className="connection-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
        {nodes.map((n:any,index:number)=><g key={`line-${n.id}`} className={`map-connection connection-${n.element}`}><line className="connection-base" x1="50" y1="50" x2={n.x} y2={n.y}/><line className="connection-flow" x1="50" y1="50" x2={n.x} y2={n.y} style={{animationDelay:`-${(index%6)*0.28}s`}}/></g>)}
