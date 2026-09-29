@@ -164,55 +164,89 @@ function HighlightGrid({items}:{items:any[];count?:number}){
 function RadialMap({owner,items,clickable=true,mineId,ownerElement}:{owner:string;items:any[];clickable?:boolean;mineId?:string|null;ownerElement?:string|null}){
  const safeItems=Array.isArray(items)?items:[];
  const ranked=[...safeItems].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
- const rankById=new Map(ranked.map((x:any,i:number)=>[x.id,i+1]));
  const maxVisible=16;
  const visible=(()=>{const top=ranked.slice(0,maxVisible);if(!mineId||top.some((x:any)=>x.id===mineId))return top;const mine=ranked.find((x:any)=>x.id===mineId);return mine?[...ranked.slice(0,maxVisible-1),mine]:top})();
 
- // 점수 절대값 대신 순위층으로 분리합니다. 현재 점수 분포가 80점대에 몰려도 노드가 한곳에 겹치지 않습니다.
- const layerOf=(index:number)=>index<4?0:index<10?1:2;
- const layerStart=[0,4,10];
- const layerCount=[Math.min(4,visible.length),Math.min(6,Math.max(0,visible.length-4)),Math.min(6,Math.max(0,visible.length-10))];
- const layerRadius=[22,32,42];
- const nodes=visible.map((item:any,index:number)=>{
-   const score=Math.max(0,Math.min(100,scoreOf(item,'인연의깊이')||60));
-   const layer=layerOf(index);
-   const within=index-layerStart[layer];
-   const count=Math.max(1,layerCount[layer]);
-   const angleOffset=[-Math.PI/2,-Math.PI/2+Math.PI/6,-Math.PI/2][layer];
-   const angle=angleOffset+(within/count)*Math.PI*2;
-   const scoreNudge=((score-85)/15)*1.2;
-   const radius=Math.max(layerRadius[layer]-1.4,Math.min(layerRadius[layer]+1.4,layerRadius[layer]-scoreNudge));
-   return {...item,x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius,score,rank:rankById.get(item.id)||null};
+ // 오행은 방향, 인연의 깊이 점수는 중심과의 거리를 결정합니다.
+ // 90/80/70점 기준선을 지나며 60점에 가까울수록 바깥쪽에 배치됩니다.
+ const elementOrder=['wood','fire','earth','metal','water'] as const;
+ const elementMeta:Record<string,{label:string;angle:number}>={
+   wood:{label:'목',angle:-90},
+   fire:{label:'화',angle:-18},
+   earth:{label:'토',angle:54},
+   metal:{label:'금',angle:126},
+   water:{label:'수',angle:198},
+ };
+ const elementOf=(item:any)=>{
+   const e=String(item?.day_element||'').toLowerCase();
+   return elementOrder.includes(e as any)?e:'earth';
+ };
+ const radiusForScore=(raw:number)=>{
+   const score=Math.max(60,Math.min(100,Number(raw)||60));
+   // 100점 13%, 90점 20.75%, 80점 28.5%, 70점 36.25%, 60점 44%
+   return 13+(100-score)*(31/40);
+ };
+ const bandOf=(score:number)=>score>=90?'90':score>=80?'80':score>=70?'70':'60';
+ const groups=new Map<string,any[]>();
+ visible.forEach((item:any)=>{
+   const score=Math.max(60,Math.min(100,scoreOf(item,'인연의깊이')||60));
+   const key=`${elementOf(item)}:${bandOf(score)}`;
+   const list=groups.get(key)||[]; list.push(item); groups.set(key,list);
+ });
+ for(const list of groups.values()) list.sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
+
+ const nodes=visible.map((item:any)=>{
+   const score=Math.max(60,Math.min(100,scoreOf(item,'인연의깊이')||60));
+   const element=elementOf(item);
+   const key=`${element}:${bandOf(score)}`;
+   const peers=groups.get(key)||[item];
+   const index=Math.max(0,peers.findIndex((x:any)=>x.id===item.id));
+   const count=Math.max(1,peers.length);
+   const sector=elementMeta[element];
+   const spread=Math.min(64,18+Math.max(0,count-1)*8);
+   const offset=count===1?0:(-spread/2)+(spread*index/(count-1));
+   const angle=(sector.angle+offset)*Math.PI/180;
+   const radius=radiusForScore(score);
+   return {...item,x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius,score,element};
  });
 
  const renderNode=(n:any)=>{
    const isMine=n.id===mineId;
    const inner=<><span className="map-role">{n.participant_role||n.relationship_type||'인연'}</span><b>{isMine?'나':n.nickname}</b>{isMine&&<em className="map-mine-tag">나</em>}</>;
    return clickable
-     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${n.participant_role||n.relationship_type||'인연'}`}>{inner}</Link>
-     : <div key={n.id} className={`radial-node visitor-node ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${n.participant_role||n.relationship_type||'인연'}`:`${n.nickname} · ${n.participant_role||n.relationship_type||'인연'}`}>{inner}</div>;
+     ? <Link to={`/result/${n.id}`} key={n.id} className={`radial-node element-${n.element} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={`${n.nickname} · ${elementMeta[n.element]?.label||'토'} · ${n.score}점`}>{inner}</Link>
+     : <div key={n.id} className={`radial-node visitor-node element-${n.element} ${isMine?'mine-node':''}`} style={{left:`${n.x}%`,top:`${n.y}%`}} title={isMine?`나 · ${elementMeta[n.element]?.label||'토'} · ${n.score}점`:`${n.nickname} · ${elementMeta[n.element]?.label||'토'} · ${n.score}점`}>{inner}</div>;
  };
+
+ const elementLabels=elementOrder.map(element=>{
+   const m=elementMeta[element];
+   const angle=m.angle*Math.PI/180;
+   const radius=47;
+   return {element,label:m.label,x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius};
+ });
 
  return <div className="radial-card card">
    <div className="radial-title">
      <p className="eyebrow">전생 인연지도</p>
-     <h2>{mineId?'내 자리도 지도에 추가됐어요':'누가 내 곁에 가장 가까이 있을까?'}</h2>
-     <p>중심에 가까운 층일수록 인연의 깊이 순위가 높습니다. 원 안에는 나와의 전생 역할이 표시됩니다.</p>
+     <h2>{mineId?'내 자리도 지도에 추가됐어요':'오행과 인연의 깊이를 한눈에'}</h2>
+     <p>같은 오행은 같은 방향에 모이고, 인연의 깊이가 높을수록 중심에 가까워집니다. 90·80·70선이 점수 거리의 기준입니다.</p>
    </div>
-   <div className="radial-map">
-     <div className="orbit rank-orbit rank-orbit-inner"/>
-     <div className="orbit rank-orbit rank-orbit-middle"/>
-     <div className="orbit rank-orbit rank-orbit-outer"/>
+   <div className="map-element-guide" aria-label="오행 배치 안내"><span>목 · 위</span><span>화 · 오른쪽 위</span><span>토 · 오른쪽 아래</span><span>금 · 왼쪽 아래</span><span>수 · 왼쪽 위</span></div>
+   <div className="radial-map element-map">
+     <div className="orbit score-orbit score-orbit-90"><span>90선</span></div>
+     <div className="orbit score-orbit score-orbit-80"><span>80선</span></div>
+     <div className="orbit score-orbit score-orbit-70"><span>70선</span></div>
+     {elementLabels.map(x=><span key={x.element} className={`map-element-label map-element-${x.element}`} style={{left:`${x.x}%`,top:`${x.y}%`}}>{x.label}</span>)}
      <svg className="connection-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-       {nodes.map((n:any,index:number)=><g key={`line-${n.id}`} className="map-connection"><line className="connection-base" x1="50" y1="50" x2={n.x} y2={n.y}/><line className="connection-flow" x1="50" y1="50" x2={n.x} y2={n.y} style={{animationDelay:`-${(index%6)*0.28}s`}}/></g>)}
+       {nodes.map((n:any,index:number)=><g key={`line-${n.id}`} className={`map-connection connection-${n.element}`}><line className="connection-base" x1="50" y1="50" x2={n.x} y2={n.y}/><line className="connection-flow" x1="50" y1="50" x2={n.x} y2={n.y} style={{animationDelay:`-${(index%6)*0.28}s`}}/></g>)}
      </svg>
      <div className="center-person"><b>{owner}</b><small>{clickable?'나':'지도 주인'}</small></div>
      {nodes.map(renderNode)}
    </div>
-   {safeItems.length>maxVisible&&<p className="radial-more">상위 인연을 중심으로 표시 중 · {safeItems.length-maxVisible}명 더 있음</p>}
+   <div className="score-orbit-legend"><span><i className="legend-line legend-90"/>90점 이상</span><span><i className="legend-line legend-80"/>80점대</span><span><i className="legend-line legend-70"/>70점대</span><span><i className="legend-line legend-60"/>60점대 · 바깥</span></div>
+   {safeItems.length>maxVisible&&<p className="radial-more">인연의 깊이 상위 {maxVisible}명을 중심으로 표시 중 · {safeItems.length-maxVisible}명 더 있음</p>}
  </div>
 }
-
 function RelationshipRanking({items,mineId,ownerMode=false}:{items:any[];mineId?:string|null;ownerMode?:boolean}){
  const ranked=[...(items||[])].sort((a:any,b:any)=>scoreOf(b,'인연의깊이')-scoreOf(a,'인연의깊이'));
  if(!ranked.length)return null;
