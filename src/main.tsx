@@ -8,6 +8,7 @@ const DELETE_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife
 const ANALYTICS_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-analytics';
 const ELEMENTS_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-elements';
 const ADMIN_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-admin';
+const OWNER_AUTH_API='https://aaokqyskfiupvexqkdvz.supabase.co/functions/v1/pastlife-owner-auth';
 const analyticsSession=()=>{try{let id=sessionStorage.getItem('pastlife:session');if(!id){id=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;sessionStorage.setItem('pastlife:session',id)}return id}catch{return `${Date.now()}-${Math.random().toString(36).slice(2)}`}};
 const track=(event_name:string,data:any={})=>{fetch(ANALYTICS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event_name,session_id:analyticsSession(),page_slug:data.page_slug||null,relationship_id:data.relationship_id||null,metadata:data.metadata||{}})}).catch(()=>{})};
 
@@ -34,7 +35,7 @@ function AdFitBanner({unit,label='광고'}:{unit:string;label?:string}){
  },[unit]);
  return <aside className="adfit-wrap" aria-label={label}><span className="adfit-label">{label}</span><ins className="kakao_ad_area" style={{display:'none'}} data-ad-unit={unit} data-ad-width="320" data-ad-height="100"/></aside>;
 }
-const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link><nav className="top-nav"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/contents/">읽을거리</Link><Link to="/faq">FAQ</Link></nav></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link><a href="/contents/">읽을거리</a><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
+const Shell=({children}:{children:React.ReactNode})=><main className="shell"><header className="site-header"><Link to="/" className="brand">사주로 보는 전생의 인연</Link></header>{children}<footer><nav className="footer-links"><Link to="/about">서비스 소개</Link><Link to="/guide">인연 해석</Link><Link to="/methodology">해석 원리</Link><Link to="/faq">FAQ</Link><a href="/contents/">읽을거리</a><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link><Link to="/delete">참여정보 삭제</Link></nav><p>전통 명리 요소를 바탕으로 만든 엔터테인먼트 콘텐츠입니다.<br/>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</p></footer></main>;
 
 const relationIcon=(code?:string,label?:string)=>{
  const byCode:Record<string,string>={KING_LOYALIST:'👑',KING_ADVISOR:'📜',COMRADES:'⚔️',TEACHER_STUDENT:'📖',RIVALS:'🔥',OLD_FRIENDS:'🤝',UNFINISHED_LOVERS:'💘',BENEFACTOR:'💎',MERCHANT_RIVALS:'💰',TROUBLE_FIXER:'💥',GUARD_ROYAL:'🛡️',FOES_TO_FRIENDS:'🪢',SIBLINGS:'🏠',WANDERERS:'🧭',HEALER_PATIENT:'🌿',PATRON_ARTIST:'🎨',FORBIDDEN_LOVE:'🌙',ONE_SIDED_LOVE:'💌',NEIGHBOR_RIVALS:'🏘️',CAPTAIN_NAVIGATOR:'⛵'};
@@ -69,14 +70,19 @@ function buildHighlights(items:any[]){
  return specs.map(x=>{const item=maxBy(items,r=>scoreOf(r,x.key));return {...x,item,score:item?scoreOf(item,x.key):0}}).filter(x=>x.item);
 }
 
-function PersonForm({buttonText,busyText='인연을 확인하고 있어요…',onSubmit}:{buttonText:string;busyText?:string;onSubmit:(v:PersonInput)=>Promise<void>|void}){
- const [nickname,setNickname]=useState(''); const [birthDate,setBirthDate]=useState(''); const [birthTime,setBirthTime]=useState(''); const [calendarType,setCalendarType]=useState<'solar'|'lunar'>('solar'); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
- const submit=async(e:React.FormEvent)=>{e.preventDefault();if(busy)return;setError('');if(!nickname.trim()){setError('닉네임을 입력해주세요.');return}if(!birthDate){setError('생년월일을 입력해주세요.');return}setBusy(true);try{await onSubmit({nickname:nickname.trim(),birthDate,birthTime,calendarType})}catch(err:any){setError(err?.message||'요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.')}finally{setBusy(false)}};
+function PersonForm({buttonText,busyText='인연을 확인하고 있어요…',onSubmit,withOwnerPassword=false}:{buttonText:string;busyText?:string;onSubmit:(v:PersonInput&{password?:string})=>Promise<void>|void;withOwnerPassword?:boolean}){
+ const [nickname,setNickname]=useState(''); const [birthDate,setBirthDate]=useState(''); const [birthTime,setBirthTime]=useState(''); const [calendarType,setCalendarType]=useState<'solar'|'lunar'>('solar'); const [password,setPassword]=useState(''); const [passwordConfirm,setPasswordConfirm]=useState(''); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
+ const submit=async(e:React.FormEvent)=>{e.preventDefault();if(busy)return;setError('');if(!nickname.trim()){setError('닉네임을 입력해주세요.');return}if(!birthDate){setError('생년월일을 입력해주세요.');return}if(withOwnerPassword){if(password.length<4||password.length>20){setError('내 지도 비밀번호는 4~20자로 입력해주세요.');return}if(password!==passwordConfirm){setError('비밀번호 확인이 일치하지 않습니다.');return}}setBusy(true);try{await onSubmit({nickname:nickname.trim(),birthDate,birthTime,calendarType,...(withOwnerPassword?{password}:{})})}catch(err:any){setError(err?.message||'요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.')}finally{setBusy(false)}};
  return <form onSubmit={submit} className="card form">
    <label>닉네임<input required maxLength={20} value={nickname} onChange={e=>setNickname(e.target.value)} placeholder="친구에게 표시될 이름"/></label>
    <label>생년월일<input required type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/></label>
    <div className="seg" aria-label="달력 종류"><button type="button" className={calendarType==='solar'?'on':''} onClick={()=>setCalendarType('solar')}>양력</button><button type="button" className={calendarType==='lunar'?'on':''} onClick={()=>setCalendarType('lunar')}>음력</button></div>
    <label>태어난 시간 <span>선택 · 모르면 비워두세요</span><input type="time" value={birthTime} onChange={e=>setBirthTime(e.target.value)}/></label>
+   {withOwnerPassword&&<div className="owner-password-fields">
+     <div className="owner-password-intro"><b>내 지도 비밀번호</b><span>다른 기기에서 내 인연지도를 다시 열 때 사용합니다.</span></div>
+     <label>비밀번호 <span>4~20자</span><input required minLength={4} maxLength={20} type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="내 지도 비밀번호"/></label>
+     <label>비밀번호 확인<input required minLength={4} maxLength={20} type="password" autoComplete="new-password" value={passwordConfirm} onChange={e=>setPasswordConfirm(e.target.value)} placeholder="비밀번호 다시 입력"/></label>
+   </div>}
    <div className="privacy-note"><b>개인정보 안내</b><span>입력한 생년월일과 출생시간은 다른 이용자에게 공개되지 않습니다.</span><span>전통 명리 요소를 활용한 엔터테인먼트 서비스이며, 입력 정보는 관계 계산과 인연지도 제공에 사용됩니다.</span><Link to="/privacy">개인정보처리방침 보기</Link></div>
    <label className="consent"><input required type="checkbox"/> 개인정보 수집·이용에 동의합니다.</label>
    {error&&<p className="form-error" role="alert">{error}</p>}
@@ -120,7 +126,7 @@ function usePageMeta(title:string,description?:string,noindex=false){
  },[title,description,noindex]);
 }
 
-function Create(){usePageMeta('내 전생 인연지도 만들기 | 사주로 보는 전생의 인연','내 사주 정보를 입력해 친구들과 공유할 전생 인연지도를 만듭니다.',true);const nav=useNavigate();const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)throw new Error(d.error||'지도를 만들지 못했습니다. 잠시 후 다시 시도해주세요.');localStorage.setItem(`owner:${d.slug}`,d.owner_token);track('page_create',{page_slug:d.slug});nav(`/n/${d.slug}`)};return <Shell><section className="create-page"><p className="eyebrow">내 인연지도 만들기</p><h1>내 전생 인연지도 만들기</h1><p className="muted">먼저 나를 등록해주세요. 친구들이 참여하면 나를 중심으로 인연지도가 만들어집니다.</p><PersonForm buttonText="내 인연지도 만들기" busyText="인연지도를 만들고 있어요…" onSubmit={submit}/><AdFitBanner unit={ADFIT_UNITS.info}/></section></Shell>}
+function Create(){usePageMeta('내 전생 인연지도 만들기 | 사주로 보는 전생의 인연','내 사주 정보를 입력해 친구들과 공유할 전생 인연지도를 만듭니다.',true);const nav=useNavigate();const submit=async(v:PersonInput&{password?:string})=>{const r=await fetch(`${API}/pages`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok){if(String(d.error||'').includes('PASSWORD_LOGIN_REQUIRED'))throw new Error('이미 비밀번호가 설정된 인연지도입니다. 기존 인연지도 주소에서 비밀번호로 열어주세요.');throw new Error(d.error||'지도를 만들지 못했습니다. 잠시 후 다시 시도해주세요.')}localStorage.setItem(`owner:${d.slug}`,d.owner_token);const ar=await fetch(`${OWNER_AUTH_API}/setup`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:d.slug,owner_token:d.owner_token,password:v.password})});const ad=await ar.json();if(!ar.ok)throw new Error(ad.error||'지도는 생성했지만 비밀번호 설정에 실패했습니다. 다시 시도해주세요.');track('page_create',{page_slug:d.slug});nav(`/n/${d.slug}`)};return <Shell><section className="create-page"><p className="eyebrow">내 인연지도 만들기</p><h1>내 전생 인연지도 만들기</h1><p className="muted">먼저 나를 등록해주세요. 친구들이 참여하면 나를 중심으로 인연지도가 만들어집니다.</p><PersonForm withOwnerPassword buttonText="내 인연지도 만들기" busyText="인연지도를 만들고 있어요…" onSubmit={submit}/><AdFitBanner unit={ADFIT_UNITS.info}/></section></Shell>}
 
 function HighlightGrid({items}:{items:any[];count?:number}){
  const hs=buildHighlights(items);
@@ -194,71 +200,25 @@ function rankInfo(items:any[],mineId?:string|null){
  return {rank:index+1,total:ranked.length,item,score:scoreOf(item,'인연의깊이')};
 }
 
-function Page(){usePageMeta('전생 인연지도 | 사주로 보는 전생의 인연',undefined,true);const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);
+function Page(){usePageMeta('전생 인연지도 | 사주로 보는 전생의 인연',undefined,true);const {slug}=useParams();const [data,setData]=React.useState<any>(null);const [loading,setLoading]=React.useState(true);const [ownerMode,setOwnerMode]=React.useState(false);const [ownerPasswordEnabled,setOwnerPasswordEnabled]=React.useState(false);const [showOwnerLogin,setShowOwnerLogin]=React.useState(false);const [ownerPassword,setOwnerPassword]=React.useState('');const [ownerLoginBusy,setOwnerLoginBusy]=React.useState(false);const [ownerLoginError,setOwnerLoginError]=React.useState('');const [setupPassword,setSetupPassword]=React.useState('');const [setupPasswordConfirm,setSetupPasswordConfirm]=React.useState('');const [setupBusy,setSetupBusy]=React.useState(false);const [setupMessage,setSetupMessage]=React.useState('');
  const mineId=new URLSearchParams(location.search).get('mine');
- const load=React.useCallback(async()=>{setLoading(true);setOwnerMode(!!localStorage.getItem(`owner:${slug}`));try{
-  const [pageRes,elRes]=await Promise.all([
-    fetch(`${API}/pages/${encodeURIComponent(slug||'')}`),
-    fetch(`${ELEMENTS_API}?slug=${encodeURIComponent(slug||'')}`).catch(()=>null)
-  ]);
-  const d=await pageRes.json();
-  if(!pageRes.ok){setData(null);return}
-  let ed:any=null;
-  if(elRes&&elRes.ok){try{ed=await elRes.json()}catch{}}
-  const byRel=new Map((ed?.relationships||[]).map((x:any)=>[x.relationship_id,x.day_element]));
-  const relationships=(d.relationships||[]).map((x:any)=>({...x,day_element:byRel.get(x.id)||null}));
-  setData({...d,owner_element:ed?.owner_element||null,relationships});
-}finally{setLoading(false)}},[slug]);React.useEffect(()=>{load()},[load]);React.useEffect(()=>{if(slug)track('page_view',{page_slug:slug})},[slug]);
+ const verifyOwner=React.useCallback(async()=>{const ownerToken=localStorage.getItem(`owner:${slug}`)||'';try{const r=await fetch(`${OWNER_AUTH_API}/verify`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug,owner_token:ownerToken})});const d=await r.json();if(r.ok){setOwnerMode(!!d.owner_authenticated);setOwnerPasswordEnabled(!!d.owner_password_enabled);if(ownerToken&&!d.owner_authenticated)localStorage.removeItem(`owner:${slug}`)}else{setOwnerMode(false)}}catch{setOwnerMode(false)}},[slug]);
+ const load=React.useCallback(async()=>{setLoading(true);try{const [pageRes,elRes]=await Promise.all([fetch(`${API}/pages/${encodeURIComponent(slug||'')}`),fetch(`${ELEMENTS_API}?slug=${encodeURIComponent(slug||'')}`).catch(()=>null),verifyOwner()]);const d=await pageRes.json();if(!pageRes.ok){setData(null);return}let ed:any=null;if(elRes&&elRes.ok){try{ed=await elRes.json()}catch{}}const byRel=new Map((ed?.relationships||[]).map((x:any)=>[x.relationship_id,x.day_element]));const relationships=(d.relationships||[]).map((x:any)=>({...x,day_element:byRel.get(x.id)||null}));setData({...d,owner_element:ed?.owner_element||null,relationships})}finally{setLoading(false)}},[slug,verifyOwner]);
+ React.useEffect(()=>{load()},[load]);React.useEffect(()=>{if(slug)track('page_view',{page_slug:slug})},[slug]);
  if(loading)return <Shell><div className="card loading-card">인연지도를 불러오는 중...</div></Shell>;if(!data)return <Shell><div className="card">존재하지 않는 인연지도입니다.</div></Shell>;
- const mine=data.relationships?.find((x:any)=>x.id===mineId);
- const mineRank=rankInfo(data.relationships||[],mineId);
+ const mine=data.relationships?.find((x:any)=>x.id===mineId);const mineRank=rankInfo(data.relationships||[],mineId);
  const submit=async(v:PersonInput)=>{const r=await fetch(`${API}/pages/${encodeURIComponent(slug||'')}/join`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(toApi(v))});const d=await r.json();if(!r.ok)throw new Error(d.error||'인연을 확인하지 못했습니다. 잠시 후 다시 시도해주세요.');track('join_submit',{page_slug:slug,relationship_id:d.relationship_id});location.href=`/n/${encodeURIComponent(slug||'')}?mine=${encodeURIComponent(d.relationship_id)}`};
  const share=async()=>{track('share_click',{page_slug:slug,metadata:{source:'map'}});const url=`${location.origin}/n/${slug}`;if(navigator.share){try{await navigator.share({title:`${data.owner_nickname}의 전생 인연지도`,text:`나랑 전생에 무슨 사이였는지 확인해봐!`,url});return}catch{}}await navigator.clipboard.writeText(url);alert('공유 링크를 복사했습니다.');};
+ const loginOwner=async(e:React.FormEvent)=>{e.preventDefault();if(ownerLoginBusy)return;setOwnerLoginError('');if(ownerPassword.length<4){setOwnerLoginError('비밀번호를 입력해주세요.');return}setOwnerLoginBusy(true);try{const r=await fetch(`${OWNER_AUTH_API}/login`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug,password:ownerPassword})});const d=await r.json();if(!r.ok)throw new Error(d.code==='PASSWORD_NOT_SET'?'이 지도에는 아직 비밀번호가 설정되어 있지 않습니다. 처음 만들었던 기기에서 먼저 비밀번호를 설정해주세요.':d.error||'비밀번호를 확인하지 못했습니다.');localStorage.setItem(`owner:${slug}`,d.owner_token);setOwnerPassword('');setShowOwnerLogin(false);await verifyOwner()}catch(err:any){setOwnerLoginError(err?.message||'비밀번호를 확인하지 못했습니다.')}finally{setOwnerLoginBusy(false)}};
+ const setLegacyPassword=async(e:React.FormEvent)=>{e.preventDefault();setSetupMessage('');if(setupPassword.length<4||setupPassword.length>20){setSetupMessage('비밀번호는 4~20자로 입력해주세요.');return}if(setupPassword!==setupPasswordConfirm){setSetupMessage('비밀번호 확인이 일치하지 않습니다.');return}const ownerToken=localStorage.getItem(`owner:${slug}`)||'';setSetupBusy(true);try{const r=await fetch(`${OWNER_AUTH_API}/setup`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug,owner_token:ownerToken,password:setupPassword})});const d=await r.json();if(!r.ok)throw new Error(d.error||'비밀번호를 설정하지 못했습니다.');setOwnerPasswordEnabled(true);setSetupPassword('');setSetupPasswordConfirm('');setSetupMessage('비밀번호가 설정되었습니다. 이제 다른 기기에서도 이 주소와 비밀번호로 내 지도를 열 수 있습니다.')}catch(err:any){setSetupMessage(err?.message||'비밀번호를 설정하지 못했습니다.')}finally{setSetupBusy(false)}};
  const publicMap=data.relationships?.length>0?<RadialMap owner={data.owner_nickname} ownerElement={data.owner_element} items={data.relationships} clickable={ownerMode} mineId={mineId}/>:<div className="empty-public-map"><b>아직 등록된 인연이 없어요</b><p>{ownerMode?'친구에게 이 지도를 보내 첫 번째 전생 인연을 찾아보세요.':`첫 번째로 참여해서 ${data.owner_nickname}의 인연지도를 시작해보세요.`}</p>{ownerMode&&<button className="primary" onClick={share}>친구에게 지도 공유하기</button>}</div>;
  return <Shell><section><p className="eyebrow">전생 인연지도</p><h1>{data.owner_nickname}의<br/>전생 인연지도</h1><div className="count"><span>지금까지 참여한 인연</span><strong>{data.count}명</strong></div>
- {ownerMode?<>{publicMap}<RelationshipRanking items={data.relationships} mineId={mineId} ownerMode={true}/>{data.relationships.length>0&&<HighlightGrid items={data.relationships} count={data.count}/>} {data.relationships.length>0&&<><button className="primary map-share-button" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 인연지도가 더 풍성해집니다.</p></>}</>:
- mine?<><section className="join-reveal">
-   <div className="join-reveal-hero card">
-     <div className="join-check">✓</div>
-     <p className="eyebrow">인연지도 참여 완료</p>
-     <h2>{mine.nickname}님이<br/>{data.owner_nickname}의 인연에 추가됐어요</h2>
-     <p>지도에서 강조된 노드가 내 자리입니다.</p>
-     {mineRank&&<div className="my-rank-summary">
-       <div><small>현재 순위</small><strong>{mineRank.rank}<span>위</span></strong></div>
-       <div><small>인연의 깊이</small><strong>{mineRank.score}<span>점</span></strong></div>
-       <div><small>전체 참여</small><strong>{mineRank.total}<span>명</span></strong></div>
-     </div>}
-     
-   </div>
-   {publicMap}
-   <Link className="primary link detail-cta detail-under-map" to={`/result/${mine.id}`}>{data.owner_nickname}와 관계 자세히 보기</Link>
-   <p className="detail-hint">이 상세 결과는 본인 관계만 열 수 있어요.</p>
-   <RelationshipRanking items={data.relationships} mineId={mineId}/>
-   <HighlightGrid items={data.relationships} count={data.count}/>
-   <div className="mine-relation-preview card">
-     <span className="mine-preview-icon">{relationIcon(mine.type_code,mine.relationship_type)}</span>
-     <div><small>나와 {data.owner_nickname}의 전생 관계</small><h3>{mine.relationship_type}</h3><p>전생 역할과 관계 점수, 사주 근거를 더 자세히 확인해보세요.</p></div>
-   </div>
-   <button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button>
- </section></>:
- <><section className="visitor-map-top">
-  {publicMap}
-  <RelationshipRanking items={data.relationships}/>
-</section>
-<section className="visitor-input-section">
-  <div className="join-intro">
-    <p className="eyebrow">내 인연 추가하기</p>
-    <h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2>
-    <p className="muted">아래에 내 정보를 입력하면 {data.owner_nickname}의 인연지도에 내 자리가 추가됩니다.</p>
-  </div>
-  <PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/>
-</section>
-<section className="visitor-unlock-section">
-  <HighlightGrid items={data.relationships} count={data.count}/>
-</section>
-</>}
- <AdFitBanner unit={ADFIT_UNITS.map}/>
- </section></Shell>}
+ {!ownerMode&&<div className="owner-entry"><button type="button" className="owner-entry-button" onClick={()=>{setShowOwnerLogin(v=>!v);setOwnerLoginError('')}}>이 지도의 주인인가요? <b>내 지도 열기</b></button>{showOwnerLogin&&<form className="owner-login-card" onSubmit={loginOwner}><div><strong>{data.owner_nickname}님의 인연지도</strong><span>만들 때 설정한 비밀번호만 입력하면 됩니다.</span></div><label>비밀번호<input autoFocus type="password" autoComplete="current-password" minLength={4} maxLength={20} value={ownerPassword} onChange={e=>setOwnerPassword(e.target.value)} placeholder="내 지도 비밀번호"/></label>{ownerLoginError&&<p className="form-error" role="alert">{ownerLoginError}</p>}<button disabled={ownerLoginBusy} className="primary">{ownerLoginBusy?'확인 중…':'내 지도 열기'}</button></form>}</div>}
+ {ownerMode?<>{!ownerPasswordEnabled&&<section className="owner-password-setup card"><p className="eyebrow">기존 지도 보안 설정</p><h2>다른 기기에서도 내 지도를 열어보세요</h2><p>이 지도에는 아직 비밀번호가 없습니다. 지금 한 번 설정해두면 새 휴대폰이나 다른 브라우저에서도 지도 주소와 비밀번호만으로 다시 열 수 있습니다.</p><form onSubmit={setLegacyPassword}><label>새 비밀번호 <span>4~20자</span><input type="password" autoComplete="new-password" minLength={4} maxLength={20} required value={setupPassword} onChange={e=>setSetupPassword(e.target.value)}/></label><label>비밀번호 확인<input type="password" autoComplete="new-password" minLength={4} maxLength={20} required value={setupPasswordConfirm} onChange={e=>setSetupPasswordConfirm(e.target.value)}/></label>{setupMessage&&<p className="owner-setup-message">{setupMessage}</p>}<button className="secondary" disabled={setupBusy}>{setupBusy?'설정 중…':'내 지도 비밀번호 설정'}</button></form></section>}{publicMap}<RelationshipRanking items={data.relationships} mineId={mineId} ownerMode={true}/>{data.relationships.length>0&&<HighlightGrid items={data.relationships} count={data.count}/>} {data.relationships.length>0&&<><button className="primary map-share-button" onClick={share}>친구에게 공유하기</button><p className="viral-copy">친구가 참여할수록 인연지도가 더 풍성해집니다.</p></>}</>:
+ mine?<><section className="join-reveal"><div className="join-reveal-hero card"><div className="join-check">✓</div><p className="eyebrow">인연지도 참여 완료</p><h2>{mine.nickname}님이<br/>{data.owner_nickname}의 인연에 추가됐어요</h2><p>지도에서 강조된 노드가 내 자리입니다.</p>{mineRank&&<div className="my-rank-summary"><div><small>현재 순위</small><strong>{mineRank.rank}<span>위</span></strong></div><div><small>인연의 깊이</small><strong>{mineRank.score}<span>점</span></strong></div><div><small>전체 참여</small><strong>{mineRank.total}<span>명</span></strong></div></div>}</div>{publicMap}<Link className="primary link detail-cta detail-under-map" to={`/result/${mine.id}`}>{data.owner_nickname}와 관계 자세히 보기</Link><p className="detail-hint">이 상세 결과는 본인 관계만 열 수 있어요.</p><RelationshipRanking items={data.relationships} mineId={mineId}/><HighlightGrid items={data.relationships} count={data.count}/><div className="mine-relation-preview card"><span className="mine-preview-icon">{relationIcon(mine.type_code,mine.relationship_type)}</span><div><small>나와 {data.owner_nickname}의 전생 관계</small><h3>{mine.relationship_type}</h3><p>전생 역할과 관계 점수, 사주 근거를 더 자세히 확인해보세요.</p></div></div><button className="secondary visitor-share" onClick={share}>이 인연지도 친구에게 공유하기</button></section></>:
+ <><section className="visitor-map-top">{publicMap}<RelationshipRanking items={data.relationships}/></section><section className="visitor-input-section"><div className="join-intro"><p className="eyebrow">내 인연 추가하기</p><h2>{data.owner_nickname}과 나는<br/>전생에 무슨 사이였을까?</h2><p className="muted">아래에 내 정보를 입력하면 {data.owner_nickname}의 인연지도에 내 자리가 추가됩니다.</p></div><PersonForm buttonText="내 자리 인연지도에 추가하기" onSubmit={submit}/></section><section className="visitor-unlock-section"><HighlightGrid items={data.relationships} count={data.count}/></section></>}
+ <AdFitBanner unit={ADFIT_UNITS.map}/></section></Shell>}
+
 function ScoreBars({scores}:{scores:Record<string,number>}){const help=(k:string)=>k==='충돌'?'높을수록 서로 부딪히거나 강하게 자극하기 쉬워요.':k==='질긴인연'?'높을수록 쉽게 잊히지 않는 연결이 강해요.':k==='서로에게주는영향'?'높을수록 서로에게 미치는 영향이 커요.':k==='신뢰'?'높을수록 믿고 의지하는 흐름이 강해요.':'높을수록 두 사람 사이의 연결이 깊게 나타나요.';return <section className="scores"><div className="score-title"><p className="eyebrow">관계 지표</p><h3>두 사람 사이에 남은 흔적</h3></div>{Object.entries(scores||{}).map(([k,v])=>{const n=Math.max(0,Math.min(100,Number(v)||0));return <div className="score-row" key={k}><div className="score-head"><span>{k}</span><b>{n}</b></div><div className="score-track"><span style={{width:`${n}%`}}/></div><small>{help(k)}</small></div>})}</section>}
 
 function drawRoundRect(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,r:number,fill:string,stroke?:string){
